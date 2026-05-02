@@ -9,7 +9,7 @@ class GroceryListCreate(BaseModel):
 class GroceryListItemResponse(BaseModel):
     id: int
     ingredient: Ingredient
-    quantity: Optional[int] = None
+    quantity: Optional[float] = None
     unit: Optional[str] = None
     
     model_config = {"from_attributes": True}
@@ -31,6 +31,6 @@ class PurchaseRequestDto(BaseModel):
     items: List[PurchaseItemInfo]
 
 class UpdateItemRequestDto(BaseModel):
-    quantity: Optional[int] = None
+    quantity: Optional[float] = None
     unit: Optional[str] = None
     expiryDate: Optional[date] = None

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -18,7 +18,7 @@ class InvItem(Base):
     item_id = Column(Integer, primary_key=True, index=True)
     inv_id = Column(Integer, ForeignKey("inventory.inv_id"), nullable=False)
     ing_id = Column(Integer, ForeignKey("ingredients.ing_id"), nullable=False)
-    quantity = Column(Integer)
+    quantity = Column(Float)
     unit = Column(String(50))
     date_added = Column(Date)
     expiry_date = Column(Date)
