@@ -124,7 +124,13 @@ def reset_password(
     if not user:
         raise HTTPException(status_code=400, detail="Invalid reset token")
     
-    if not user.reset_token_expiry or datetime.now(timezone.utc) > user.reset_token_expiry:
+    # Handle timezone comparison - ensure both datetimes are timezone-aware
+    current_time = datetime.now(timezone.utc)
+    expiry_time = user.reset_token_expiry
+    if expiry_time and expiry_time.tzinfo is None:
+        expiry_time = expiry_time.replace(tzinfo=timezone.utc)
+
+    if not user.reset_token_expiry or current_time > expiry_time:
         raise HTTPException(status_code=400, detail="Reset token expired")
     
     user.password = security.get_password_hash(request.newPassword)

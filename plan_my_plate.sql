@@ -65,7 +65,7 @@ CREATE TABLE `grocery_list_ingredients` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `list_id` int(11) NOT NULL,
   `ing_id` int(11) NOT NULL,
-  `quantity` int(11) DEFAULT 1,
+  `quantity` float DEFAULT 1,
   `unit` varchar(50) DEFAULT 'unit',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -124,7 +124,7 @@ CREATE TABLE `inventory` (
 
 CREATE TABLE `inv_item` (
   `item_id` int(11) NOT NULL,
-  `quantity` int(11) DEFAULT NULL,
+  `quantity` float DEFAULT NULL,
   `date_added` date DEFAULT NULL,
   `expiry_date` date DEFAULT NULL,
   `inv_id` int(11) NOT NULL,
@@ -188,7 +188,7 @@ CREATE TABLE `recipe_ingredients` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `recipe_id` int(11) NOT NULL,
   `ing_id` int(11) NOT NULL,
-  `quantity` int(11) DEFAULT NULL,
+  `quantity` float DEFAULT NULL,
   `unit` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -4,7 +4,7 @@ from .ingredient import Ingredient
 
 class RecipeIngredientDto(BaseModel):
     ingId: int
-    quantity: Optional[int] = 1
+    quantity: Optional[float] = 1.0
     unit: Optional[str] = "unit"
 
 class RecipeCreateDto(BaseModel):
@@ -21,7 +21,7 @@ class RecipeCreateDto(BaseModel):
 class RecipeIngredientResponse(BaseModel):
     id: int
     ingredient: Ingredient
-    quantity: Optional[int] = None
+    quantity: Optional[float] = None
     unit: Optional[str] = None
     
     model_config = {"from_attributes": True}

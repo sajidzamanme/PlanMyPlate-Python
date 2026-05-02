@@ -178,7 +178,11 @@ class GeminiAiService:
         
         for ing in ingredients_data:
             name = ing.get("name", "Unknown")
-            quantity = ing.get("quantity", 0)
+            # Convert quantity to float to support fractional amounts (0.5, 1.5, etc.)
+            try:
+                quantity = float(ing.get("quantity", 0))
+            except (ValueError, TypeError):
+                quantity = 0.0
             unit = ing.get("unit", "unit")
             
             # Find/Create ingredient
