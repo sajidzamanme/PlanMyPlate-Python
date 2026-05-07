@@ -208,7 +208,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "diet": "Vegan",
     "allergies": ["Peanuts", "Shellfish"],
     "dislikes": ["Mushrooms"],
-    "servings": 2,
     "budget": 150.00
   }
   ```
@@ -224,7 +223,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "diet": "Vegan",
     "allergies": ["Peanuts"],
     "dislikes": [],
-    "servings": 4,
     "budget": 200.00
   }
   ```
@@ -409,6 +407,7 @@ Retrieve active 7-day meal plans for a user.
           "slotIndex": 0,
           "mealType": "Breakfast",
           "dayNumber": 1,
+          "servingsMultiplier": 2,
           "recipe": { "recipeId": 1, "name": "..." }
         }
       ]
@@ -450,11 +449,14 @@ Generate a meal plan with selected recipes. Also creates a grocery list with agg
   ```json
   {
     "recipeIds": [1, 5, 12, 3, 8, 15, 2, 6, 10, 4, 7, 13, 1, 5, 12, 3, 8, 15, 2, 6, 10],
+    "servingsMultipliers": [2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 3, 1, 2, 1],
     "duration": 7,
     "startDate": "2026-04-01"
   }
   ```
   > Provide up to 21 recipe IDs (3 meals × 7 days). Recipes are auto-assigned: indices 0,1,2 → Day 1 (Breakfast, Lunch, Dinner), etc.
+  >
+  > `servingsMultipliers` (optional): An array of integers (1–6) matching `recipeIds` length. Each value sets the serving multiplier for the corresponding recipe slot. If omitted, all default to 1.
 
 - **Response Body (201 Created):** Created MealPlan object with populated slots.
 

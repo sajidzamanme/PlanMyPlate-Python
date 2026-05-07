@@ -61,7 +61,6 @@ class UserPreferences(Base):
     pref_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), unique=True, nullable=False)
     diet_id = Column(Integer, ForeignKey("diets.diet_id"))
-    servings = Column(Integer, nullable=False, default=1)
     budget = Column(Numeric(10, 2))
     
     user = relationship("User", back_populates="preferences")
