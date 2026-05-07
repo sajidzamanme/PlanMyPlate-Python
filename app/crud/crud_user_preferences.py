@@ -41,9 +41,6 @@ class CRUDUserPreferences(CRUDBase[UserPreferences, UserPreferencesDto, UserPref
                     dislikes.append(ing)
             db_obj.dislikes = dislikes
             
-        if obj_in.servings is not None:
-            db_obj.servings = obj_in.servings
-            
         if obj_in.budget is not None:
             db_obj.budget = obj_in.budget
             

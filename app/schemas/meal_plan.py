@@ -5,6 +5,7 @@ from .recipe import RecipeResponse
 
 class MealPlanRequestDto(BaseModel):
     recipeIds: List[int] = Field(..., alias="recipe_ids")
+    servingsMultipliers: Optional[List[int]] = Field(None, alias="servings_multipliers")
     duration: int = 7
     startDate: Optional[date] = Field(None, alias="start_date")
     
@@ -15,6 +16,7 @@ class MealSlotResponse(BaseModel):
     slotIndex: int          = Field(alias="slot_index")
     mealType: str           = Field(alias="meal_type")
     dayNumber: int          = Field(alias="day_number")
+    servingsMultiplier: int = Field(alias="servings_multiplier", default=1)
     recipe: RecipeResponse
     
     model_config = {"from_attributes": True, "populate_by_name": True}

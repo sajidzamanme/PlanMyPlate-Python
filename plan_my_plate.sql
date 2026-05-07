@@ -157,7 +157,8 @@ CREATE TABLE `meal_slot` (
   `recipe_id` int(11) NOT NULL,
   `slot_index` int(11) NOT NULL,
   `meal_type` varchar(20) NOT NULL,
-  `day_number` int(11) NOT NULL
+  `day_number` int(11) NOT NULL,
+  `servings_multiplier` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -243,7 +244,6 @@ CREATE TABLE `user_preferences` (
   `pref_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `diet_id` int(11) DEFAULT NULL,
-  `servings` int(11) NOT NULL,
   `budget` decimal(10,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

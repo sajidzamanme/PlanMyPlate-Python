@@ -39,7 +39,6 @@ class UserPreferencesDto(BaseModel):
     diet: Optional[str] = None
     allergies: List[str] = []
     dislikes: List[str] = []
-    servings: int
     budget: Optional[Decimal] = None
 
     model_config = {"from_attributes": True, "populate_by_name": True}

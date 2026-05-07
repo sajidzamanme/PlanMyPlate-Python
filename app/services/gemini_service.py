@@ -87,6 +87,7 @@ class GeminiAiService:
                 
         dto = MealPlanRequestDto(
             recipeIds=ordered_ids,
+            servingsMultipliers=[1] * len(ordered_ids),
             duration=7,
             startDate=start_date or date.today()
         )

@@ -56,60 +56,29 @@ def create_meal_plan_with_recipes(
     
     meal_plan = crud.meal_plan.create_with_recipes(db, user_id=user_id, dto=dto)
     
-    # Logic to populate grocery list
-    # Aggregate ingredients
-    ingredient_map = {}
-    
-    # Need to access meal_plan slots and their recipes
-    # Assuming crud_meal_plan loaded them eagerly or lazy loading works in same session
-    
-    # Re-fetch meal_plan to ensure relationships loaded if needed
-    # Or rely on session cache
-    
-    recipe_ids = dto.recipeIds
-    # ... Wait, replicating logic from Java service where it aggregates ingredients
-    # I should probably move this logic to CRUD or a service layer.
-    # But CRUD `create_with_recipes` already created slots.
-    
-    # Let's do it here or in CRUD.
-    # Java does: createWithRecipes -> calls groceryListService.addIngredientsWithQuantities
-    # I can call crud.grocery_list.add_ingredients_with_quantities here.
-    
-    # But I need the recipe ingredients.
-    # I can fetch recipes and aggregate.
-    
+    # Populate grocery list using per-slot serving multipliers
     from app.schemas.ingredient import IngredientQuantityDto
     
-    # Count recipe occurrences
-    recipe_counts = {}
-    for rid in recipe_ids:
-        recipe_counts[rid] = recipe_counts.get(rid, 0) + 1
+    recipe_ids = dto.recipeIds
+    multipliers = dto.servingsMultipliers or [1] * len(recipe_ids)
     
     ingredient_dtos = []
     
-    # Fetch recipes
-    # Optimization: fetch all unique recipes in one query?
-    # crud.recipe.get_multi would need filtering by IDs.
-    # Simple loop for now.
-    
-    processed_recipes = set()
-    for rid in recipe_ids:
-        if rid in processed_recipes: continue
-        processed_recipes.add(rid)
+    for i, rid in enumerate(recipe_ids):
+        if i >= 21: break
         
         recipe = crud.recipe.get(db, id=rid)
         if not recipe: continue
         
-        count = recipe_counts[rid]
+        multiplier = multipliers[i] if i < len(multipliers) else 1
         
         for ri in recipe.recipe_ingredients:
-            # Map to DTO
-            dto = IngredientQuantityDto(
+            ing_dto = IngredientQuantityDto(
                 ingredient=ri.ingredient,
-                quantity=ri.quantity * count if ri.quantity else 0,
+                quantity=ri.quantity * multiplier if ri.quantity else 0,
                 unit=ri.unit or "unit"
             )
-            ingredient_dtos.append(dto)
+            ingredient_dtos.append(ing_dto)
             
     crud.grocery_list.add_ingredients_with_quantities(db, user_id=user_id, ingredient_data=ingredient_dtos)
     
