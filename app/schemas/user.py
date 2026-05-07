@@ -1,11 +1,15 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from decimal import Decimal
+from datetime import date
 
 class UserBase(BaseModel):
-    name: str
+    firstName: str = Field(alias="first_name")
+    lastName: str = Field(alias="last_name")
     userName: Optional[str] = Field(None, alias="user_name")
     email: EmailStr
+    phone: Optional[str] = None
+    dateOfBirth: Optional[date] = Field(None, alias="date_of_birth")
     
     model_config = {"populate_by_name": True}
 
@@ -13,8 +17,11 @@ class UserCreate(UserBase):
     password: str
 
 class UserUpdate(BaseModel):
-    name: Optional[str] = None
+    firstName: Optional[str] = Field(None, alias="first_name")
+    lastName: Optional[str] = Field(None, alias="last_name")
     userName: Optional[str] = Field(None, alias="user_name")
+    phone: Optional[str] = None
+    dateOfBirth: Optional[date] = Field(None, alias="date_of_birth")
     age: Optional[int] = None
     weight: Optional[Decimal] = None
     budget: Optional[Decimal] = None

@@ -511,6 +511,23 @@ ALTER TABLE `users`
   ADD COLUMN `reset_token_expiry` TIMESTAMP NULL DEFAULT NULL;
 
 --
+-- Split name into first_name and last_name
+--
+ALTER TABLE `users`
+  ADD COLUMN `first_name` VARCHAR(50) NOT NULL DEFAULT '' AFTER `user_name`,
+  ADD COLUMN `last_name` VARCHAR(50) NOT NULL DEFAULT '' AFTER `first_name`;
+
+--
+-- Add phone (unique, used as login identifier) and date_of_birth
+--
+ALTER TABLE `users`
+  ADD COLUMN `phone` VARCHAR(20) NOT NULL DEFAULT '',
+  ADD COLUMN `date_of_birth` DATE DEFAULT NULL;
+
+ALTER TABLE `users`
+  ADD UNIQUE KEY `phone` (`phone`);
+
+--
 -- Foreign key constraints
 --
 ALTER TABLE `grocery_list`
