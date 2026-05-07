@@ -15,8 +15,11 @@ def read_user_me(
     return UserDto(
         userId=current_user.user_id,
         email=current_user.email,
-        name=current_user.name,
-        userName=current_user.user_name
+        firstName=current_user.first_name,
+        lastName=current_user.last_name,
+        userName=current_user.user_name,
+        phone=current_user.phone,
+        dateOfBirth=current_user.date_of_birth
     )
 
 @router.get("/{user_id}", response_model=UserDto)
@@ -26,20 +29,19 @@ def read_user_by_id(
     current_user: User = Depends(deps.get_current_user)
 ) -> Any:
     user = crud.user.get(db, id=user_id)
-    if user == current_user:
-        return user
     if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found"
         )
-    # The Java code allows any authenticated user to view another user (based on endpoint definition)
-    # But usually we might want to restrict or allow. Java code: return userRepository.findById...
     return UserDto(
         userId=user.user_id,
         email=user.email,
-        name=user.name,
-        userName=user.user_name
+        firstName=user.first_name,
+        lastName=user.last_name,
+        userName=user.user_name,
+        phone=user.phone,
+        dateOfBirth=user.date_of_birth
     )
 
 @router.put("/{user_id}", response_model=UserDto)
@@ -66,8 +68,11 @@ def update_user(
     return UserDto(
         userId=user.user_id,
         email=user.email,
-        name=user.name,
-        userName=user.user_name
+        firstName=user.first_name,
+        lastName=user.last_name,
+        userName=user.user_name,
+        phone=user.phone,
+        dateOfBirth=user.date_of_birth
     )
 
 @router.delete("/{user_id}")

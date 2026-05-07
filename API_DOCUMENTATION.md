@@ -18,11 +18,20 @@ Register a new user account.
 - **Request Body:**
   ```json
   {
-    "name": "John Doe",
+    "firstName": "John",
+    "lastName": "Doe",
     "email": "john.doe@example.com",
-    "password": "securePassword123"
+    "password": "securePassword123",
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
+  > **Validation rules:**
+  > - `firstName`, `lastName`: Required, cannot be empty
+  > - `password`: Minimum 8 characters
+  > - `phone`: Required, 7-15 digits, optionally starting with `+`. Must be unique.
+  > - `dateOfBirth`: ISO date (`YYYY-MM-DD`), must be in the past
+
 - **Response Body:**
   ```json
   {
@@ -30,20 +39,30 @@ Register a new user account.
     "access_token": "eyJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
     "email": "john.doe@example.com",
-    "name": "John Doe",
-    "userId": 1
+    "firstName": "John",
+    "lastName": "Doe",
+    "userId": 1,
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
 
 ### Sign In
-Authenticate an existing user.
+Authenticate an existing user via **email or phone number**.
 
 - **URL:** `/api/auth/signin`
 - **Method:** `POST`
-- **Request Body:**
+- **Request Body (with email):**
   ```json
   {
-    "email": "john.doe@example.com",
+    "identifier": "john.doe@example.com",
+    "password": "securePassword123"
+  }
+  ```
+- **Request Body (with phone):**
+  ```json
+  {
+    "identifier": "+8801712345678",
     "password": "securePassword123"
   }
   ```
@@ -54,19 +73,22 @@ Authenticate an existing user.
     "access_token": "eyJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
     "email": "john.doe@example.com",
-    "name": "John Doe",
-    "userId": 1
+    "firstName": "John",
+    "lastName": "Doe",
+    "userId": 1,
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
 
 ### OAuth2 Token (Swagger UI)
-Dedicated endpoint for Swagger UI's "Authorize" button.
+Dedicated endpoint for Swagger UI's "Authorize" button. Supports email or phone as username.
 
 - **URL:** `/api/auth/token`
 - **Method:** `POST`
 - **Content-Type:** `application/x-www-form-urlencoded`
 - **Form Fields:**
-  - `username`: User's email
+  - `username`: User's email or phone number
   - `password`: User's password
 - **Response Body:** Same as Sign In.
 
@@ -123,9 +145,12 @@ Retrieve profile of the currently authenticated user.
   ```json
   {
     "userId": 1,
-    "name": "John Doe",
+    "firstName": "John",
+    "lastName": "Doe",
     "userName": "john_doe",
-    "email": "john.doe@example.com"
+    "email": "john.doe@example.com",
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
 
@@ -142,8 +167,11 @@ Retrieve profile of the currently authenticated user.
 - **Request Body:**
   ```json
   {
-    "name": "John Updated",
+    "firstName": "John",
+    "lastName": "Updated",
     "userName": "john_updated",
+    "phone": "+8801700000000",
+    "dateOfBirth": "1998-06-20",
     "age": 25,
     "weight": 70.5,
     "budget": 500.00

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Table, TIMESTAMP, func
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Table, TIMESTAMP, Date, func
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -36,9 +36,12 @@ class User(Base):
     
     user_id = Column(Integer, primary_key=True, index=True)
     user_name = Column(String(100))
-    name = Column(String(100), nullable=False)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
     password = Column(String(255), nullable=False)
+    phone = Column(String(20), unique=True, nullable=False)
+    date_of_birth = Column(Date, nullable=True)
     age = Column(Integer)
     weight = Column(Numeric(5, 2))
     budget = Column(Numeric(10, 2))
