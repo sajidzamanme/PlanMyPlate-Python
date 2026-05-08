@@ -1,9 +1,9 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import crud
 from app.api import deps
-from app.schemas.meal_plan import MealPlanResponse, MealPlanCreate, MealPlanUpdate, MealPlanRequestDto
+from app.schemas.meal_plan import MealPlanResponse, MealPlanUpdate, MealPlanRequestDto
 from app.models.user import User
 
 router = APIRouter()
@@ -30,18 +30,6 @@ def get_meal_plan(
     if meal_plan.user_id != current_user.user_id:
         raise HTTPException(status_code=400, detail="Not enough permissions")
     return meal_plan
-
-@router.post("/user/{user_id}", response_model=MealPlanResponse, status_code=201)
-def create_meal_plan(
-    *,
-    db: Session = Depends(deps.get_db),
-    user_id: int,
-    meal_plan_in: MealPlanCreate,
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    if user_id != current_user.user_id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
-    return crud.meal_plan.create_simple(db, user_id=user_id, obj_in=meal_plan_in)
 
 @router.post("/user/{user_id}/create", response_model=MealPlanResponse, status_code=201)
 def create_meal_plan_with_recipes(

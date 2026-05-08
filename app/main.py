@@ -26,7 +26,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "auth",             "description": "User registration, login, and password reset"},
         {"name": "users",            "description": "User profile management"},
-        {"name": "user-preferences", "description": "Dietary preferences, allergies, and dislikes"},
+        {"name": "user-preferences", "description": "Dietary preferences, allergies (selected from ingredients), and dislikes"},
         {"name": "ingredients",      "description": "Ingredient catalogue with price and tags"},
         {"name": "recipes",          "description": "Recipe CRUD, search, and calorie filtering"},
         {"name": "meal-plans",       "description": "Weekly meal plan creation and management"},
@@ -41,7 +41,7 @@ app = FastAPI(
                 "Uses the existing inventory; no separate table required."
             ),
         },
-        {"name": "reference-data",   "description": "Static reference lists: diets, allergies, ingredient tags"},
+        {"name": "reference-data",   "description": "Static reference lists: diets, ingredient tags"},
         {"name": "files",            "description": "Image upload and static file serving"},
         {"name": "ai",               "description": "AI-powered recipe and meal plan generation via Google Gemini"},
     ],

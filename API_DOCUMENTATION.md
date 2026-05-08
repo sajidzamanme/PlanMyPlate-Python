@@ -6,6 +6,8 @@ This document provides a detailed reference for the PlanMyPlate Python (FastAPI)
 
 **Interactive Docs (Swagger UI):** Available at `http://localhost:8000/docs` when the server is running.
 
+**Authorization in Swagger:** Sign in via `/api/auth/signin`, copy the `access_token` from the response, then click the **Authorize** button at the top of Swagger UI and paste it as `Bearer <token>`.
+
 ---
 
 ## 1. Authentication
@@ -79,17 +81,6 @@ Authenticate an existing user via **email or phone number**.
   }
   ```
 
-### OAuth2 Token (Swagger UI)
-Dedicated endpoint for Swagger UI's "Authorize" button. Supports email or phone as username.
-
-- **URL:** `/api/auth/token`
-- **Method:** `POST`
-- **Content-Type:** `application/x-www-form-urlencoded`
-- **Form Fields:**
-  - `username`: User's email or phone number
-  - `password`: User's password
-- **Response Body:** Same as Sign In.
-
 ### Forgot Password
 Initiate password reset process.
 
@@ -151,12 +142,6 @@ Retrieve profile of the currently authenticated user.
   }
   ```
 
-### Get User by ID
-- **URL:** `/api/users/{user_id}`
-- **Method:** `GET`
-- **Headers:** `Authorization: Bearer <token>`
-- **Response Body:** Same structure as Get Current User.
-
 ### Update User
 - **URL:** `/api/users/{user_id}`
 - **Method:** `PUT`
@@ -191,6 +176,8 @@ Retrieve profile of the currently authenticated user.
 
 ## 3. User Preferences
 Manage dietary preferences, allergies, and dislikes. Requires authentication.
+
+> Allergies and dislikes are both selected from the **ingredients list** (`GET /api/ingredients`).
 
 ### Get Preferences
 - **URL:** `/api/user-preferences/{user_id}`
@@ -297,22 +284,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
 - **Method:** `GET`
 - **Response Body:** Single Recipe object.
 
-### Update Recipe
-- **URL:** `/api/recipes/{id}`
-- **Method:** `PUT`
-- **Request Body:** Same format as Create Recipe.
-- **Response Body:** Updated Recipe object.
-
-### Delete Recipe
-- **URL:** `/api/recipes/{id}`
-- **Method:** `DELETE`
-- **Response Body:**
-  ```json
-  {
-    "message": "Recipe deleted successfully"
-  }
-  ```
-
 ---
 
 ## 5. Ingredients
@@ -337,41 +308,9 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
 - **Method:** `GET`
 - **Response Body:** List of matching Ingredient objects.
 
-### Filter by Price
-- **URL:** `/api/ingredients/filter/price?minPrice=1.00&maxPrice=5.00`
-- **Method:** `GET`
-- **Response Body:** List of Ingredient objects within price range.
-
-### Create Ingredient
-- **URL:** `/api/ingredients`
-- **Method:** `POST`
-- **Request Body:**
-  ```json
-  {
-    "name": "Coconut",
-    "price": 3.50
-  }
-  ```
-- **Response Body (201 Created):** Created Ingredient object.
-
 ### Get Ingredient by ID
 - **URL:** `/api/ingredients/{id}`
 - **Method:** `GET`
-
-### Update Ingredient
-- **URL:** `/api/ingredients/{id}`
-- **Method:** `PUT`
-- **Request Body:**
-  ```json
-  {
-    "name": "Updated Name",
-    "price": 4.00
-  }
-  ```
-
-### Delete Ingredient
-- **URL:** `/api/ingredients/{id}`
-- **Method:** `DELETE`
 
 ---
 
@@ -420,21 +359,6 @@ Retrieve active 7-day meal plans for a user.
 - **URL:** `/api/meal-plans/{id}`
 - **Method:** `GET`
 - **Response Body:** Single MealPlan object.
-
-### Create Meal Plan (Simple)
-Create a new empty meal plan. Deactivates existing active plans.
-
-- **URL:** `/api/meal-plans/user/{user_id}`
-- **Method:** `POST`
-- **Request Body:**
-  ```json
-  {
-    "startDate": "2026-04-01",
-    "duration": 7,
-    "status": "active"
-  }
-  ```
-- **Response Body (201 Created):** Created MealPlan object.
 
 ### Create Meal Plan with Recipes
 Generate a meal plan with selected recipes. Also creates a grocery list with aggregated ingredients.
@@ -512,17 +436,6 @@ All grocery list endpoints require authentication.
 ### Get Grocery List by ID
 - **URL:** `/api/grocery-lists/{id}`
 - **Method:** `GET`
-
-### Create Grocery List
-- **URL:** `/api/grocery-lists/user/{user_id}`
-- **Method:** `POST`
-- **Request Body:**
-  ```json
-  {
-    "status": "active"
-  }
-  ```
-- **Response Body (201 Created):** Created GroceryList object.
 
 ### Update Grocery List
 - **URL:** `/api/grocery-lists/{id}`
@@ -602,17 +515,6 @@ All inventory endpoints require authentication.
   ```
   > Returns 404 if the user doesn't have an inventory yet. An inventory is auto-created when items are purchased from a grocery list.
 
-### Create Inventory
-Manually create an empty inventory for a user.
-
-- **URL:** `/api/inventory/user/{user_id}`
-- **Method:** `POST`
-- **Response Body:** Created Inventory object.
-
-### Get Inventory by ID
-- **URL:** `/api/inventory/{id}`
-- **Method:** `GET`
-
 ### Get Inventory Items
 - **URL:** `/api/inventory/{inventory_id}/items`
 - **Method:** `GET`
@@ -652,10 +554,6 @@ Manually create an empty inventory for a user.
 - **Method:** `DELETE`
 - **Response Body:** `{"message": "Item removed successfully"}`
 
-### Delete Inventory
-- **URL:** `/api/inventory/{id}`
-- **Method:** `DELETE`
-
 ---
 
 ## 9. Reference Data
@@ -672,27 +570,7 @@ Manually create an empty inventory for a user.
   ]
   ```
 
-### Get All Allergies
-- **URL:** `/api/reference-data/allergies`
-- **Method:** `GET`
-- **Response Body:**
-  ```json
-  [
-    { "allergyId": 1, "allergyName": "Peanuts" },
-    { "allergyId": 2, "allergyName": "Milk" }
-  ]
-  ```
-
-### Get All Ingredients (for Dislikes selection)
-- **URL:** `/api/reference-data/dislikes`
-- **Method:** `GET`
-- **Response Body:**
-  ```json
-  [
-    { "ingId": 1, "name": "Rice" },
-    { "ingId": 2, "name": "Chicken" }
-  ]
-  ```
+> For **allergies and dislikes**, use `GET /api/ingredients` — users select from the same ingredient list for both.
 
 ---
 
@@ -927,7 +805,66 @@ Permanently removes an item from the inventory.
 
 ---
 
-## 13. Error Handling
+## 13. Admin Endpoints
+
+Admin endpoints for managing reference data and performing administrative tasks. Require authentication (`Authorization: Bearer <token>`).
+
+> **Note:** These endpoints are grouped under the "admin" tag in Swagger UI and use the `/api/admin` prefix. Currently any authenticated user can access them; role-based access control will be added in the future.
+
+### Get User by ID
+Look up any user's profile.
+
+- **URL:** `/api/admin/users/{user_id}`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:** Same structure as Get Current User.
+
+### Create Ingredient
+- **URL:** `/api/admin/ingredients`
+- **Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "name": "Coconut",
+    "price": 3.50
+  }
+  ```
+- **Response Body (201 Created):** Created Ingredient object.
+
+### Update Ingredient
+- **URL:** `/api/admin/ingredients/{id}`
+- **Method:** `PUT`
+- **Request Body:**
+  ```json
+  {
+    "name": "Updated Name",
+    "price": 4.00
+  }
+  ```
+
+### Delete Ingredient
+- **URL:** `/api/admin/ingredients/{id}`
+- **Method:** `DELETE`
+
+### Update Recipe
+- **URL:** `/api/admin/recipes/{id}`
+- **Method:** `PUT`
+- **Request Body:** Same format as Create Recipe.
+- **Response Body:** Updated Recipe object.
+
+### Delete Recipe
+- **URL:** `/api/admin/recipes/{id}`
+- **Method:** `DELETE`
+- **Response Body:**
+  ```json
+  {
+    "message": "Recipe deleted successfully"
+  }
+  ```
+
+---
+
+## 14. Error Handling
 
 The API uses standard HTTP status codes and returns structured error responses.
 

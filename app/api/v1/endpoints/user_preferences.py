@@ -27,7 +27,7 @@ def get_preferences(
         prefId=prefs.pref_id,
         userId=prefs.user_id,
         diet=prefs.diet.diet_name if prefs.diet else None,
-        allergies=[a.allergy_name for a in prefs.allergies],
+        allergies=[a.name for a in prefs.allergies],
         dislikes=[d.name for d in prefs.dislikes],
         budget=prefs.budget
     )
@@ -49,7 +49,7 @@ def set_preferences(
         prefId=prefs.pref_id,
         userId=prefs.user_id,
         diet=prefs.diet.diet_name if prefs.diet else None,
-        allergies=[a.allergy_name for a in prefs.allergies],
+        allergies=[a.name for a in prefs.allergies],
         dislikes=[d.name for d in prefs.dislikes],
         budget=prefs.budget
     )

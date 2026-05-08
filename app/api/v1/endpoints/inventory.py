@@ -28,49 +28,6 @@ def get_user_inventory(
         raise HTTPException(status_code=404, detail="Inventory not found")
     return inventory
 
-@router.get("/{id}", response_model=InventoryResponse)
-def get_inventory(
-    id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    inventory = crud.inventory.get(db, id=id)
-    if not inventory:
-        raise HTTPException(status_code=404, detail="Inventory not found")
-    if inventory.user_id != current_user.user_id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
-    return inventory
-
-@router.post("/user/{user_id}", response_model=InventoryResponse)
-def create_inventory(
-    *,
-    db: Session = Depends(deps.get_db),
-    user_id: int,
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    if user_id != current_user.user_id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
-    
-    if crud.inventory.get_by_user_id(db, user_id=user_id):
-        raise HTTPException(status_code=409, detail="Inventory already exists for user")
-        
-    return crud.inventory.create_for_user(db, user_id=user_id)
-
-@router.delete("/{id}")
-def delete_inventory(
-    *,
-    db: Session = Depends(deps.get_db),
-    id: int,
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    inventory = crud.inventory.get(db, id=id)
-    if not inventory:
-        raise HTTPException(status_code=404, detail="Inventory not found")
-    if inventory.user_id != current_user.user_id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
-    crud.inventory.remove(db, id=id)
-    return {"message": "Inventory deleted successfully"}
-
 @router.get("/{inventory_id}/items", response_model=List[InvItemResponse])
 def get_inventory_items(
     inventory_id: int,

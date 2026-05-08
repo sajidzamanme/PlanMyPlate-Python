@@ -136,7 +136,7 @@ class GeminiAiService:
     def build_weekly_prompt(self, db: Session, prefs, meal_type: str) -> str:
         db_summary = self.get_database_summary(db)
         diet = prefs.diet.diet_name if prefs and prefs.diet else "None"
-        allergies = [a.allergy_name for a in prefs.allergies] if prefs else []
+        allergies = [a.name for a in prefs.allergies] if prefs else []
         return f"""
         Generate 7 DISTINCT {meal_type} recipes for a weekly meal plan.
         {db_summary}

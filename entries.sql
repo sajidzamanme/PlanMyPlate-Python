@@ -1,12 +1,3 @@
-INSERT INTO allergies (allergy_name) VALUES
-('Peanuts'),
-('Milk'),
-('Eggs'),
-('Fish'),
-('Shellfish'),
-('Soy'),
-('Gluten');
-
 INSERT INTO diets (diet_name) VALUES
 ('Omnivore'),
 ('Vegetarian'),
