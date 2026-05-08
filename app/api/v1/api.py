@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
-    auth, users, user_preferences, ingredients, recipes, 
-    meal_plans, grocery_lists, inventory, reference_data, files, ai
+    auth, users, user_preferences, ingredients, recipes,
+    meal_plans, grocery_lists, inventory, reference_data, files, ai,
+    expiry, admin,
 )
 
 api_router = APIRouter()
@@ -17,3 +18,5 @@ api_router.include_router(inventory.router, prefix="/inventory", tags=["inventor
 api_router.include_router(reference_data.router, prefix="/reference-data", tags=["reference-data"])
 api_router.include_router(files.router, prefix="/files", tags=["files"])
 api_router.include_router(ai.router, prefix="/ai", tags=["ai"])
+api_router.include_router(expiry.router, prefix="/expiry", tags=["expiry"])
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])

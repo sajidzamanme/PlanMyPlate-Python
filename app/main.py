@@ -17,7 +17,37 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_PREFIX}/openapi.json"
+    description=(
+        "REST API for the **PlanMyPlate** meal-planning mobile app. "
+        "Manage users, recipes, meal plans, grocery lists, inventory, "
+        "product expiry tracking, and AI-powered recipe generation via Google Gemini."
+    ),
+    version="1.1.0",
+    openapi_url=f"{settings.API_PREFIX}/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {"name": "auth",             "description": "User registration, login, and password reset"},
+        {"name": "users",            "description": "User profile management"},
+        {"name": "user-preferences", "description": "Dietary preferences, allergies (selected from ingredients), and dislikes"},
+        {"name": "ingredients",      "description": "Ingredient catalogue with price and tags"},
+        {"name": "recipes",          "description": "Recipe CRUD, search, and calorie filtering"},
+        {"name": "meal-plans",       "description": "Weekly meal plan creation and management"},
+        {"name": "grocery-lists",    "description": "Grocery list management and purchase flow"},
+        {"name": "inventory",        "description": "Pantry / inventory item tracking"},
+        {
+            "name": "expiry",
+            "description": (
+                "**Product Expiry System** — Add purchased products with expiry dates, "
+                "list all tracked items, and fetch soon-to-expire items within a configurable "
+                "day window (default 10 days). Designed for scheduled mobile calls. "
+                "Uses the existing inventory; no separate table required."
+            ),
+        },
+        {"name": "reference-data",   "description": "Static reference lists: diets, ingredient tags"},
+        {"name": "files",            "description": "Image upload and static file serving"},
+        {"name": "ai",               "description": "AI-powered recipe and meal plan generation via Google Gemini"},
+    ],
 )
 
 # Set all CORS enabled origins

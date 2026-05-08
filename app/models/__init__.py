@@ -1,4 +1,4 @@
-from .reference import Diet, Allergy, IngredientTag
+from .reference import Diet, IngredientTag
 from .ingredient import Ingredient, ingredient_tag_map
 from .recipe import Recipe, RecipeIngredient
 from .user import User, UserPreferences

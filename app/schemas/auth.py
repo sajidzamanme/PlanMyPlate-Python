@@ -51,13 +51,12 @@ class SignUpRequest(BaseModel):
         return v
 
 class SignInRequest(BaseModel):
-    identifier: str  # email or phone number
+    email: str
     password: str
 
 class AuthResponse(BaseModel):
-    token: str
-    access_token: Optional[str] = None # Added for Swagger compatibility
-    token_type: str = "bearer"         # Added for Swagger compatibility
+    access_token: str
+    token_type: str = "bearer"
     email: str
     firstName: str
     lastName: str

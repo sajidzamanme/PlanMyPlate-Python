@@ -17,31 +17,8 @@ def read_user_me(
         email=current_user.email,
         firstName=current_user.first_name,
         lastName=current_user.last_name,
-        userName=current_user.user_name,
         phone=current_user.phone,
         dateOfBirth=current_user.date_of_birth
-    )
-
-@router.get("/{user_id}", response_model=UserDto)
-def read_user_by_id(
-    user_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    user = crud.user.get(db, id=user_id)
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-    return UserDto(
-        userId=user.user_id,
-        email=user.email,
-        firstName=user.first_name,
-        lastName=user.last_name,
-        userName=user.user_name,
-        phone=user.phone,
-        dateOfBirth=user.date_of_birth
     )
 
 @router.put("/{user_id}", response_model=UserDto)
@@ -70,7 +47,6 @@ def update_user(
         email=user.email,
         firstName=user.first_name,
         lastName=user.last_name,
-        userName=user.user_name,
         phone=user.phone,
         dateOfBirth=user.date_of_birth
     )

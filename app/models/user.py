@@ -2,26 +2,12 @@ from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Table, TIME
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
-# Association tables
-user_allergies = Table(
-    "user_allergies",
-    Base.metadata,
-    Column("user_id", Integer, ForeignKey("users.user_id"), primary_key=True),
-    Column("allergy_id", Integer, ForeignKey("allergies.allergy_id"), primary_key=True)
-)
-
-user_dislikes = Table(
-    "user_dislikes",
-    Base.metadata,
-    Column("user_id", Integer, ForeignKey("users.user_id"), primary_key=True),
-    Column("ing_id", Integer, ForeignKey("ingredients.ing_id"), primary_key=True)
-)
-
+# Association tables for UserPreferences
 user_prefs_allergies = Table(
     "user_preferences_allergies",
     Base.metadata,
     Column("pref_id", Integer, ForeignKey("user_preferences.pref_id"), primary_key=True),
-    Column("allergy_id", Integer, ForeignKey("allergies.allergy_id"), primary_key=True)
+    Column("ing_id", Integer, ForeignKey("ingredients.ing_id"), primary_key=True)
 )
 
 user_prefs_dislikes = Table(
@@ -35,7 +21,6 @@ class User(Base):
     __tablename__ = "users"
     
     user_id = Column(Integer, primary_key=True, index=True)
-    user_name = Column(String(100))
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
@@ -51,8 +36,6 @@ class User(Base):
     reset_token_expiry = Column(TIMESTAMP, nullable=True)
     
     # Relationships
-    allergies = relationship("Allergy", secondary=user_allergies, backref="users")
-    dislikes = relationship("Ingredient", secondary=user_dislikes, backref="users_who_dislike")
     preferences = relationship("UserPreferences", uselist=False, back_populates="user", cascade="all, delete-orphan")
 
 class UserPreferences(Base):
@@ -65,5 +48,5 @@ class UserPreferences(Base):
     
     user = relationship("User", back_populates="preferences")
     diet = relationship("Diet")
-    allergies = relationship("Allergy", secondary=user_prefs_allergies, backref="preferences")
+    allergies = relationship("Ingredient", secondary=user_prefs_allergies, backref="preferences_that_avoid")
     dislikes = relationship("Ingredient", secondary=user_prefs_dislikes, backref="preferences_who_dislike")

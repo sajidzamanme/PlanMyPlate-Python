@@ -1,6 +1,5 @@
-from typing import Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Form
-from fastapi.security import OAuth2PasswordRequestForm
+from typing import Any
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 import secrets
@@ -52,7 +51,7 @@ def sign_up(
     access_token = security.create_access_token(user.email)
     
     return AuthResponse(
-        token=access_token,
+        access_token=access_token,
         email=user.email,
         firstName=user.first_name,
         lastName=user.last_name,
@@ -68,7 +67,7 @@ def sign_in(
     request: SignInRequest
 ) -> Any:
     user = crud.user.authenticate(
-        db, identifier=request.identifier, password=request.password
+        db, identifier=request.email, password=request.password
     )
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email/phone or password")
@@ -76,33 +75,6 @@ def sign_in(
     access_token = security.create_access_token(user.email)
     
     return AuthResponse(
-        token=access_token,
-        access_token=access_token,
-        token_type="bearer",
-        email=user.email,
-        firstName=user.first_name,
-        lastName=user.last_name,
-        userId=user.user_id,
-        phone=user.phone,
-        dateOfBirth=user.date_of_birth
-    )
-
-@router.post("/token", response_model=AuthResponse)
-def login_for_access_token(
-    *,
-    db: Session = Depends(deps.get_db),
-    form_data: OAuth2PasswordRequestForm = Depends()
-) -> Any:
-    user = crud.user.authenticate(
-        db, identifier=form_data.username, password=form_data.password
-    )
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email/phone or password")
-    
-    access_token = security.create_access_token(user.email)
-    
-    return AuthResponse(
-        token=access_token,
         access_token=access_token,
         token_type="bearer",
         email=user.email,
