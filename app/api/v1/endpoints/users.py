@@ -17,7 +17,6 @@ def read_user_me(
         email=current_user.email,
         firstName=current_user.first_name,
         lastName=current_user.last_name,
-        userName=current_user.user_name,
         phone=current_user.phone,
         dateOfBirth=current_user.date_of_birth
     )
@@ -39,7 +38,6 @@ def read_user_by_id(
         email=user.email,
         firstName=user.first_name,
         lastName=user.last_name,
-        userName=user.user_name,
         phone=user.phone,
         dateOfBirth=user.date_of_birth
     )
@@ -70,7 +68,6 @@ def update_user(
         email=user.email,
         firstName=user.first_name,
         lastName=user.last_name,
-        userName=user.user_name,
         phone=user.phone,
         dateOfBirth=user.date_of_birth
     )

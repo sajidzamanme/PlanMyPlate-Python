@@ -35,7 +35,6 @@ Register a new user account.
 - **Response Body:**
   ```json
   {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
     "access_token": "eyJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
     "email": "john.doe@example.com",
@@ -55,21 +54,20 @@ Authenticate an existing user via **email or phone number**.
 - **Request Body (with email):**
   ```json
   {
-    "identifier": "john.doe@example.com",
+    "email": "john.doe@example.com",
     "password": "securePassword123"
   }
   ```
 - **Request Body (with phone):**
   ```json
   {
-    "identifier": "+8801712345678",
+    "email": "+8801712345678",
     "password": "securePassword123"
   }
   ```
 - **Response Body:**
   ```json
   {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
     "access_token": "eyJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
     "email": "john.doe@example.com",
@@ -147,7 +145,6 @@ Retrieve profile of the currently authenticated user.
     "userId": 1,
     "firstName": "John",
     "lastName": "Doe",
-    "userName": "john_doe",
     "email": "john.doe@example.com",
     "phone": "+8801712345678",
     "dateOfBirth": "1998-05-15"
@@ -169,7 +166,6 @@ Retrieve profile of the currently authenticated user.
   {
     "firstName": "John",
     "lastName": "Updated",
-    "userName": "john_updated",
     "phone": "+8801700000000",
     "dateOfBirth": "1998-06-20",
     "age": 25,
@@ -774,7 +770,164 @@ Generate a complete weekly meal plan (21 meals) based on user preferences.
 
 ---
 
-## 12. Error Handling
+## 12. Product Expiry System
+Track product expiry dates for items in the user's pantry/inventory.  
+All endpoints require `Authorization: Bearer <token>`.
+
+> **How it works:** When a user buys a product they enter the product name and expiry date. The product name is matched **case-insensitively** against existing ingredients — a new ingredient is created automatically if no match is found. Items are stored directly in the user's inventory (`inv_item` table). An inventory is auto-created if the user doesn't have one yet.
+
+> **Scheduled use:** The mobile app reads the user's *"expiry warning days"* setting and passes it as the `days` query parameter on a scheduled call to `/soon`. The server default is **10 days**.
+
+---
+
+### Add a Product with Expiry Date
+Record a purchased product and its expiry date.
+
+- **URL:** `/api/expiry/user/{user_id}/items`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Request Body:**
+  ```json
+  {
+    "productName": "Milk",
+    "expiryDate": "2026-05-18",
+    "quantity": 2,
+    "unit": "litre"
+  }
+  ```
+  > **Validation rules:**
+  > - `productName`: Required, 1–150 characters
+  > - `expiryDate`: Required, ISO date (`YYYY-MM-DD`). Past dates are **allowed** (item may already be expired)
+  > - `quantity`: Must be > 0, defaults to `1.0`
+  > - `unit`: Defaults to `"unit"`
+
+- **Response Body (201 Created):**
+  ```json
+  {
+    "itemId": 42,
+    "productName": "Milk",
+    "expiryDate": "2026-05-18",
+    "dateAdded": "2026-05-08",
+    "quantity": 2.0,
+    "unit": "litre",
+    "daysUntilExpiry": 10,
+    "isExpired": false
+  }
+  ```
+  > `daysUntilExpiry` — days remaining until expiry (negative means already expired).  
+  > `isExpired` — `true` when `daysUntilExpiry < 0`.
+
+---
+
+### List All Expiry-Tracked Items
+Returns all inventory items that have an expiry date, ordered soonest-first.
+
+- **URL:** `/api/expiry/user/{user_id}/items`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:** List of expiry item objects (same structure as above).
+
+---
+
+### Get Soon-to-Expire Items *(Scheduled endpoint)*
+Returns items expiring within the next N days. Already-expired items are **included** and flagged.
+
+- **URL:** `/api/expiry/user/{user_id}/soon`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  | Parameter | Type | Default | Description |
+  |-----------|------|---------|-------------|
+  | `days` | integer | `10` | Warning threshold in days. Range: `0–3650`. Pass the user's setting value from the app. |
+
+- **Response Body:**
+  ```json
+  {
+    "thresholdDays": 10,
+    "totalCount": 3,
+    "expiredCount": 1,
+    "items": [
+      {
+        "itemId": 41,
+        "productName": "Yogurt",
+        "expiryDate": "2026-05-05",
+        "dateAdded": "2026-04-28",
+        "quantity": 1.0,
+        "unit": "unit",
+        "daysUntilExpiry": -3,
+        "isExpired": true
+      },
+      {
+        "itemId": 42,
+        "productName": "Milk",
+        "expiryDate": "2026-05-18",
+        "dateAdded": "2026-05-08",
+        "quantity": 2.0,
+        "unit": "litre",
+        "daysUntilExpiry": 10,
+        "isExpired": false
+      }
+    ]
+  }
+  ```
+  > `thresholdDays` — echoed back so the client can confirm what threshold was applied.  
+  > `expiredCount` — count of items whose expiry date is strictly before today.  
+  > `days=0` returns only items expiring exactly today plus already-expired items.
+
+---
+
+### Update an Expiry Item
+Partially update the expiry date, quantity, or unit of a tracked product. Only supplied fields are changed.
+
+- **URL:** `/api/expiry/items/{item_id}`
+- **Method:** `PUT`
+- **Headers:** `Authorization: Bearer <token>`
+- **Request Body (all fields optional):**
+  ```json
+  {
+    "expiryDate": "2026-05-22",
+    "quantity": 1.5,
+    "unit": "litre"
+  }
+  ```
+- **Response Body:** Updated expiry item object.
+
+---
+
+### Delete an Expiry Item
+Permanently removes an item from the inventory.
+
+- **URL:** `/api/expiry/items/{item_id}`
+- **Method:** `DELETE`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:**
+  ```json
+  {
+    "message": "Item removed successfully"
+  }
+  ```
+
+---
+
+### Expiry System — Corner Cases
+
+| Scenario | Behaviour |
+|----------|-----------|
+| Product name not in DB | New ingredient created automatically (price = 0) |
+| User has no inventory | Inventory auto-created on first POST |
+| Past expiry date on POST | Allowed — item added with `isExpired: true` |
+| Same product, different batch | New row always inserted; independent expiry dates tracked |
+| `days=0` on `/soon` | Returns today's expiring + already-expired only |
+| `days` outside `0–3650` | HTTP 422 validation error |
+| Empty `productName` | HTTP 422 validation error |
+| Wrong user token | HTTP 400 — Not enough permissions |
+| Item not found | HTTP 404 |
+| Item belongs to another user | HTTP 400 — Not enough permissions |
+| User has no expiry items | Returns empty list with `totalCount: 0` (not 404) |
+
+---
+
+## 13. Error Handling
 
 The API uses standard HTTP status codes and returns structured error responses.
 

@@ -18,7 +18,6 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             password=get_password_hash(obj_in.password),
             first_name=obj_in.firstName,
             last_name=obj_in.lastName,
-            user_name=obj_in.userName or f"{obj_in.firstName}_{obj_in.lastName}".lower(),
             phone=obj_in.phone,
             date_of_birth=obj_in.dateOfBirth
         )

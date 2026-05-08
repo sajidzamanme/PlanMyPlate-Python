@@ -125,6 +125,7 @@ CREATE TABLE `inventory` (
 CREATE TABLE `inv_item` (
   `item_id` int(11) NOT NULL,
   `quantity` float DEFAULT NULL,
+  `unit` varchar(50) DEFAULT 'unit',
   `date_added` date DEFAULT NULL,
   `expiry_date` date DEFAULT NULL,
   `inv_id` int(11) NOT NULL,
@@ -202,8 +203,6 @@ CREATE TABLE `recipe_ingredients` (
 
 CREATE TABLE `users` (
   `user_id` int(11) NOT NULL,
-  `user_name` varchar(100) DEFAULT NULL,
-  `name` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
   `password` varchar(255) NOT NULL,
   `age` int(11) DEFAULT NULL,
@@ -336,7 +335,8 @@ ALTER TABLE `inventory`
 ALTER TABLE `inv_item`
   ADD PRIMARY KEY (`item_id`),
   ADD KEY `inv_id` (`inv_id`),
-  ADD KEY `ing_id` (`ing_id`);
+  ADD KEY `ing_id` (`ing_id`),
+  ADD KEY `idx_inv_item_expiry` (`expiry_date`);
 
 --
 -- Indexes for table `meal_plan`
@@ -498,10 +498,8 @@ ALTER TABLE `user_preferences`
   MODIFY `pref_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- Add unit column to inv_item table
+-- (unit column is now defined directly in the inv_item CREATE TABLE above)
 --
-ALTER TABLE `inv_item` 
-  ADD COLUMN unit VARCHAR(50);
 
 --
 -- Add reset_token columns to users table (for password reset)
@@ -511,10 +509,10 @@ ALTER TABLE `users`
   ADD COLUMN `reset_token_expiry` TIMESTAMP NULL DEFAULT NULL;
 
 --
--- Split name into first_name and last_name
+-- Add first_name and last_name
 --
 ALTER TABLE `users`
-  ADD COLUMN `first_name` VARCHAR(50) NOT NULL DEFAULT '' AFTER `user_name`,
+  ADD COLUMN `first_name` VARCHAR(50) NOT NULL DEFAULT '' AFTER `email`,
   ADD COLUMN `last_name` VARCHAR(50) NOT NULL DEFAULT '' AFTER `first_name`;
 
 --
@@ -526,6 +524,18 @@ ALTER TABLE `users`
 
 ALTER TABLE `users`
   ADD UNIQUE KEY `phone` (`phone`);
+
+--
+-- Drop legacy `name` column (migrated to first_name + last_name)
+--
+ALTER TABLE `users`
+  DROP COLUMN IF EXISTS `name`;
+
+--
+-- Drop legacy `user_name` column (email is used as the identifier)
+--
+ALTER TABLE `users`
+  DROP COLUMN IF EXISTS `user_name`;
 
 --
 -- Foreign key constraints
