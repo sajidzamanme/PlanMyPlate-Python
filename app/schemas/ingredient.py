@@ -27,7 +27,7 @@ class Ingredient(IngredientBase):
 
 class IngredientQuantityDto(BaseModel):
     ingredient: Ingredient
-    quantity: int
+    quantity: float
     unit: str
     
     model_config = {"from_attributes": True, "populate_by_name": True}
