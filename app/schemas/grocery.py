@@ -25,7 +25,7 @@ class GroceryListResponse(BaseModel):
 
 class PurchaseItemInfo(BaseModel):
     itemId: int
-    quantity: int
+    quantity: float
 
 class PurchaseRequestDto(BaseModel):
     items: List[PurchaseItemInfo]
