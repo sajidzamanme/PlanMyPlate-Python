@@ -6,6 +6,8 @@ This document provides a detailed reference for the PlanMyPlate Python (FastAPI)
 
 **Interactive Docs (Swagger UI):** Available at `http://localhost:8000/docs` when the server is running.
 
+**Authorization in Swagger:** Sign in via `/api/auth/signin`, copy the `access_token` from the response, then click the **Authorize** button at the top of Swagger UI and paste it as `Bearer <token>`.
+
 ---
 
 ## 1. Authentication
@@ -18,57 +20,66 @@ Register a new user account.
 - **Request Body:**
   ```json
   {
-    "name": "John Doe",
+    "firstName": "John",
+    "lastName": "Doe",
     "email": "john.doe@example.com",
-    "password": "securePassword123"
+    "password": "securePassword123",
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
+  > **Validation rules:**
+  > - `firstName`, `lastName`: Required, cannot be empty
+  > - `password`: Minimum 8 characters
+  > - `phone`: Required, 7-15 digits, optionally starting with `+`. Must be unique.
+  > - `dateOfBirth`: ISO date (`YYYY-MM-DD`), must be in the past
+
 - **Response Body:**
   ```json
   {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
     "access_token": "eyJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
     "email": "john.doe@example.com",
-    "name": "John Doe",
-    "userId": 1
+    "firstName": "John",
+    "lastName": "Doe",
+    "userId": 1,
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
 
 ### Sign In
-Authenticate an existing user.
+Authenticate an existing user via **email or phone number**.
 
 - **URL:** `/api/auth/signin`
 - **Method:** `POST`
-- **Request Body:**
+- **Request Body (with email):**
   ```json
   {
     "email": "john.doe@example.com",
     "password": "securePassword123"
   }
   ```
+- **Request Body (with phone):**
+  ```json
+  {
+    "email": "+8801712345678",
+    "password": "securePassword123"
+  }
+  ```
 - **Response Body:**
   ```json
   {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
     "access_token": "eyJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
     "email": "john.doe@example.com",
-    "name": "John Doe",
-    "userId": 1
+    "firstName": "John",
+    "lastName": "Doe",
+    "userId": 1,
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
-
-### OAuth2 Token (Swagger UI)
-Dedicated endpoint for Swagger UI's "Authorize" button.
-
-- **URL:** `/api/auth/token`
-- **Method:** `POST`
-- **Content-Type:** `application/x-www-form-urlencoded`
-- **Form Fields:**
-  - `username`: User's email
-  - `password`: User's password
-- **Response Body:** Same as Sign In.
 
 ### Forgot Password
 Initiate password reset process.
@@ -123,17 +134,13 @@ Retrieve profile of the currently authenticated user.
   ```json
   {
     "userId": 1,
-    "name": "John Doe",
-    "userName": "john_doe",
-    "email": "john.doe@example.com"
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "phone": "+8801712345678",
+    "dateOfBirth": "1998-05-15"
   }
   ```
-
-### Get User by ID
-- **URL:** `/api/users/{user_id}`
-- **Method:** `GET`
-- **Headers:** `Authorization: Bearer <token>`
-- **Response Body:** Same structure as Get Current User.
 
 ### Update User
 - **URL:** `/api/users/{user_id}`
@@ -142,8 +149,10 @@ Retrieve profile of the currently authenticated user.
 - **Request Body:**
   ```json
   {
-    "name": "John Updated",
-    "userName": "john_updated",
+    "firstName": "John",
+    "lastName": "Updated",
+    "phone": "+8801700000000",
+    "dateOfBirth": "1998-06-20",
     "age": 25,
     "weight": 70.5,
     "budget": 500.00
@@ -168,6 +177,8 @@ Retrieve profile of the currently authenticated user.
 ## 3. User Preferences
 Manage dietary preferences, allergies, and dislikes. Requires authentication.
 
+> Allergies and dislikes are both selected from the **ingredients list** (`GET /api/ingredients`).
+
 ### Get Preferences
 - **URL:** `/api/user-preferences/{user_id}`
 - **Method:** `GET`
@@ -180,7 +191,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "diet": "Vegan",
     "allergies": ["Peanuts", "Shellfish"],
     "dislikes": ["Mushrooms"],
-    "servings": 2,
     "budget": 150.00
   }
   ```
@@ -196,7 +206,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "diet": "Vegan",
     "allergies": ["Peanuts"],
     "dislikes": [],
-    "servings": 4,
     "budget": 200.00
   }
   ```
@@ -275,22 +284,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
 - **Method:** `GET`
 - **Response Body:** Single Recipe object.
 
-### Update Recipe
-- **URL:** `/api/recipes/{id}`
-- **Method:** `PUT`
-- **Request Body:** Same format as Create Recipe.
-- **Response Body:** Updated Recipe object.
-
-### Delete Recipe
-- **URL:** `/api/recipes/{id}`
-- **Method:** `DELETE`
-- **Response Body:**
-  ```json
-  {
-    "message": "Recipe deleted successfully"
-  }
-  ```
-
 ---
 
 ## 5. Ingredients
@@ -315,41 +308,9 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
 - **Method:** `GET`
 - **Response Body:** List of matching Ingredient objects.
 
-### Filter by Price
-- **URL:** `/api/ingredients/filter/price?minPrice=1.00&maxPrice=5.00`
-- **Method:** `GET`
-- **Response Body:** List of Ingredient objects within price range.
-
-### Create Ingredient
-- **URL:** `/api/ingredients`
-- **Method:** `POST`
-- **Request Body:**
-  ```json
-  {
-    "name": "Coconut",
-    "price": 3.50
-  }
-  ```
-- **Response Body (201 Created):** Created Ingredient object.
-
 ### Get Ingredient by ID
 - **URL:** `/api/ingredients/{id}`
 - **Method:** `GET`
-
-### Update Ingredient
-- **URL:** `/api/ingredients/{id}`
-- **Method:** `PUT`
-- **Request Body:**
-  ```json
-  {
-    "name": "Updated Name",
-    "price": 4.00
-  }
-  ```
-
-### Delete Ingredient
-- **URL:** `/api/ingredients/{id}`
-- **Method:** `DELETE`
 
 ---
 
@@ -381,6 +342,7 @@ Retrieve active 7-day meal plans for a user.
           "slotIndex": 0,
           "mealType": "Breakfast",
           "dayNumber": 1,
+          "servingsMultiplier": 2,
           "recipe": { "recipeId": 1, "name": "..." }
         }
       ]
@@ -398,21 +360,6 @@ Retrieve active 7-day meal plans for a user.
 - **Method:** `GET`
 - **Response Body:** Single MealPlan object.
 
-### Create Meal Plan (Simple)
-Create a new empty meal plan. Deactivates existing active plans.
-
-- **URL:** `/api/meal-plans/user/{user_id}`
-- **Method:** `POST`
-- **Request Body:**
-  ```json
-  {
-    "startDate": "2026-04-01",
-    "duration": 7,
-    "status": "active"
-  }
-  ```
-- **Response Body (201 Created):** Created MealPlan object.
-
 ### Create Meal Plan with Recipes
 Generate a meal plan with selected recipes. Also creates a grocery list with aggregated ingredients.
 
@@ -422,11 +369,14 @@ Generate a meal plan with selected recipes. Also creates a grocery list with agg
   ```json
   {
     "recipeIds": [1, 5, 12, 3, 8, 15, 2, 6, 10, 4, 7, 13, 1, 5, 12, 3, 8, 15, 2, 6, 10],
+    "servingsMultipliers": [2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 3, 1, 2, 1],
     "duration": 7,
     "startDate": "2026-04-01"
   }
   ```
   > Provide up to 21 recipe IDs (3 meals × 7 days). Recipes are auto-assigned: indices 0,1,2 → Day 1 (Breakfast, Lunch, Dinner), etc.
+  >
+  > `servingsMultipliers` (optional): An array of integers (1–6) matching `recipeIds` length. Each value sets the serving multiplier for the corresponding recipe slot. If omitted, all default to 1.
 
 - **Response Body (201 Created):** Created MealPlan object with populated slots.
 
@@ -486,17 +436,6 @@ All grocery list endpoints require authentication.
 ### Get Grocery List by ID
 - **URL:** `/api/grocery-lists/{id}`
 - **Method:** `GET`
-
-### Create Grocery List
-- **URL:** `/api/grocery-lists/user/{user_id}`
-- **Method:** `POST`
-- **Request Body:**
-  ```json
-  {
-    "status": "active"
-  }
-  ```
-- **Response Body (201 Created):** Created GroceryList object.
 
 ### Update Grocery List
 - **URL:** `/api/grocery-lists/{id}`
@@ -576,17 +515,6 @@ All inventory endpoints require authentication.
   ```
   > Returns 404 if the user doesn't have an inventory yet. An inventory is auto-created when items are purchased from a grocery list.
 
-### Create Inventory
-Manually create an empty inventory for a user.
-
-- **URL:** `/api/inventory/user/{user_id}`
-- **Method:** `POST`
-- **Response Body:** Created Inventory object.
-
-### Get Inventory by ID
-- **URL:** `/api/inventory/{id}`
-- **Method:** `GET`
-
 ### Get Inventory Items
 - **URL:** `/api/inventory/{inventory_id}/items`
 - **Method:** `GET`
@@ -626,10 +554,6 @@ Manually create an empty inventory for a user.
 - **Method:** `DELETE`
 - **Response Body:** `{"message": "Item removed successfully"}`
 
-### Delete Inventory
-- **URL:** `/api/inventory/{id}`
-- **Method:** `DELETE`
-
 ---
 
 ## 9. Reference Data
@@ -646,27 +570,7 @@ Manually create an empty inventory for a user.
   ]
   ```
 
-### Get All Allergies
-- **URL:** `/api/reference-data/allergies`
-- **Method:** `GET`
-- **Response Body:**
-  ```json
-  [
-    { "allergyId": 1, "allergyName": "Peanuts" },
-    { "allergyId": 2, "allergyName": "Milk" }
-  ]
-  ```
-
-### Get All Ingredients (for Dislikes selection)
-- **URL:** `/api/reference-data/dislikes`
-- **Method:** `GET`
-- **Response Body:**
-  ```json
-  [
-    { "ingId": 1, "name": "Rice" },
-    { "ingId": 2, "name": "Chicken" }
-  ]
-  ```
+> For **allergies and dislikes**, use `GET /api/ingredients` — users select from the same ingredient list for both.
 
 ---
 
@@ -744,7 +648,223 @@ Generate a complete weekly meal plan (21 meals) based on user preferences.
 
 ---
 
-## 12. Error Handling
+## 12. Product Expiry System
+Track product expiry dates for items in the user's pantry/inventory.  
+All endpoints require `Authorization: Bearer <token>`.
+
+> **How it works:** When a user buys a product they enter the product name and expiry date. The product name is matched **case-insensitively** against existing ingredients — a new ingredient is created automatically if no match is found. Items are stored directly in the user's inventory (`inv_item` table). An inventory is auto-created if the user doesn't have one yet.
+
+> **Scheduled use:** The mobile app reads the user's *"expiry warning days"* setting and passes it as the `days` query parameter on a scheduled call to `/soon`. The server default is **10 days**.
+
+---
+
+### Add a Product with Expiry Date
+Record a purchased product and its expiry date.
+
+- **URL:** `/api/expiry/user/{user_id}/items`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Request Body:**
+  ```json
+  {
+    "productName": "Milk",
+    "expiryDate": "2026-05-18",
+    "quantity": 2,
+    "unit": "litre"
+  }
+  ```
+  > **Validation rules:**
+  > - `productName`: Required, 1–150 characters
+  > - `expiryDate`: Required, ISO date (`YYYY-MM-DD`). Past dates are **allowed** (item may already be expired)
+  > - `quantity`: Must be > 0, defaults to `1.0`
+  > - `unit`: Defaults to `"unit"`
+
+- **Response Body (201 Created):**
+  ```json
+  {
+    "itemId": 42,
+    "productName": "Milk",
+    "expiryDate": "2026-05-18",
+    "dateAdded": "2026-05-08",
+    "quantity": 2.0,
+    "unit": "litre",
+    "daysUntilExpiry": 10,
+    "isExpired": false
+  }
+  ```
+  > `daysUntilExpiry` — days remaining until expiry (negative means already expired).  
+  > `isExpired` — `true` when `daysUntilExpiry < 0`.
+
+---
+
+### List All Expiry-Tracked Items
+Returns all inventory items that have an expiry date, ordered soonest-first.
+
+- **URL:** `/api/expiry/user/{user_id}/items`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:** List of expiry item objects (same structure as above).
+
+---
+
+### Get Soon-to-Expire Items *(Scheduled endpoint)*
+Returns items expiring within the next N days. Already-expired items are **included** and flagged.
+
+- **URL:** `/api/expiry/user/{user_id}/soon`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  | Parameter | Type | Default | Description |
+  |-----------|------|---------|-------------|
+  | `days` | integer | `10` | Warning threshold in days. Range: `0–3650`. Pass the user's setting value from the app. |
+
+- **Response Body:**
+  ```json
+  {
+    "thresholdDays": 10,
+    "totalCount": 3,
+    "expiredCount": 1,
+    "items": [
+      {
+        "itemId": 41,
+        "productName": "Yogurt",
+        "expiryDate": "2026-05-05",
+        "dateAdded": "2026-04-28",
+        "quantity": 1.0,
+        "unit": "unit",
+        "daysUntilExpiry": -3,
+        "isExpired": true
+      },
+      {
+        "itemId": 42,
+        "productName": "Milk",
+        "expiryDate": "2026-05-18",
+        "dateAdded": "2026-05-08",
+        "quantity": 2.0,
+        "unit": "litre",
+        "daysUntilExpiry": 10,
+        "isExpired": false
+      }
+    ]
+  }
+  ```
+  > `thresholdDays` — echoed back so the client can confirm what threshold was applied.  
+  > `expiredCount` — count of items whose expiry date is strictly before today.  
+  > `days=0` returns only items expiring exactly today plus already-expired items.
+
+---
+
+### Update an Expiry Item
+Partially update the expiry date, quantity, or unit of a tracked product. Only supplied fields are changed.
+
+- **URL:** `/api/expiry/items/{item_id}`
+- **Method:** `PUT`
+- **Headers:** `Authorization: Bearer <token>`
+- **Request Body (all fields optional):**
+  ```json
+  {
+    "expiryDate": "2026-05-22",
+    "quantity": 1.5,
+    "unit": "litre"
+  }
+  ```
+- **Response Body:** Updated expiry item object.
+
+---
+
+### Delete an Expiry Item
+Permanently removes an item from the inventory.
+
+- **URL:** `/api/expiry/items/{item_id}`
+- **Method:** `DELETE`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:**
+  ```json
+  {
+    "message": "Item removed successfully"
+  }
+  ```
+
+---
+
+### Expiry System — Corner Cases
+
+| Scenario | Behaviour |
+|----------|-----------|
+| Product name not in DB | New ingredient created automatically (price = 0) |
+| User has no inventory | Inventory auto-created on first POST |
+| Past expiry date on POST | Allowed — item added with `isExpired: true` |
+| Same product, different batch | New row always inserted; independent expiry dates tracked |
+| `days=0` on `/soon` | Returns today's expiring + already-expired only |
+| `days` outside `0–3650` | HTTP 422 validation error |
+| Empty `productName` | HTTP 422 validation error |
+| Wrong user token | HTTP 400 — Not enough permissions |
+| Item not found | HTTP 404 |
+| Item belongs to another user | HTTP 400 — Not enough permissions |
+| User has no expiry items | Returns empty list with `totalCount: 0` (not 404) |
+
+---
+
+## 13. Admin Endpoints
+
+Admin endpoints for managing reference data and performing administrative tasks. Require authentication (`Authorization: Bearer <token>`).
+
+> **Note:** These endpoints are grouped under the "admin" tag in Swagger UI and use the `/api/admin` prefix. Currently any authenticated user can access them; role-based access control will be added in the future.
+
+### Get User by ID
+Look up any user's profile.
+
+- **URL:** `/api/admin/users/{user_id}`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:** Same structure as Get Current User.
+
+### Create Ingredient
+- **URL:** `/api/admin/ingredients`
+- **Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "name": "Coconut",
+    "price": 3.50
+  }
+  ```
+- **Response Body (201 Created):** Created Ingredient object.
+
+### Update Ingredient
+- **URL:** `/api/admin/ingredients/{id}`
+- **Method:** `PUT`
+- **Request Body:**
+  ```json
+  {
+    "name": "Updated Name",
+    "price": 4.00
+  }
+  ```
+
+### Delete Ingredient
+- **URL:** `/api/admin/ingredients/{id}`
+- **Method:** `DELETE`
+
+### Update Recipe
+- **URL:** `/api/admin/recipes/{id}`
+- **Method:** `PUT`
+- **Request Body:** Same format as Create Recipe.
+- **Response Body:** Updated Recipe object.
+
+### Delete Recipe
+- **URL:** `/api/admin/recipes/{id}`
+- **Method:** `DELETE`
+- **Response Body:**
+  ```json
+  {
+    "message": "Recipe deleted successfully"
+  }
+  ```
+
+---
+
+## 14. Error Handling
 
 The API uses standard HTTP status codes and returns structured error responses.
 

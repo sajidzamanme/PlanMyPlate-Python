@@ -55,6 +55,7 @@ class CRUDMealPlan(CRUDBase[MealPlan, MealPlanCreate, MealPlanUpdate]):
         
         if dto.recipeIds:
             recipe_ids = dto.recipeIds
+            multipliers = dto.servingsMultipliers or [1] * len(recipe_ids)
             for i, recipe_id in enumerate(recipe_ids):
                 if i >= 21: break # limit 21
                 
@@ -70,15 +71,12 @@ class CRUDMealPlan(CRUDBase[MealPlan, MealPlanCreate, MealPlanUpdate]):
                     recipe_id=recipe_id,
                     slot_index=i,
                     day_number=day,
-                    meal_type=meal_type
+                    meal_type=meal_type,
+                    servings_multiplier=multipliers[i] if i < len(multipliers) else 1
                 )
                 db.add(slot)
             db.commit()
             db.refresh(meal_plan)
-            
-            # Logic to populate grocery list would go here or be triggered.
-            # Java: calls groceryListService.addIngredientsWithQuantities
-            # I will implement this logic in the endpoint using Grocery CRUD/Service.
             
         return meal_plan
 

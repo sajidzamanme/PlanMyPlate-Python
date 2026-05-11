@@ -21,23 +21,14 @@ def get_preferences(
     prefs = crud.user_preferences.get_by_user_id(db, user_id=user_id)
     if not prefs:
         # Return default if not found
-        return UserPreferencesDto(userId=user_id, servings=1, allergies=[], dislikes=[])
-    
-    # Map entity to DTO (SQLAlchemy models usually can be converted via from_attributes in Pydantic, 
-    # but for nested lists of strings we might need manual mapping if Pydantic doesn't handle it perfectly directly 
-    # with the provided structure. Let's see if Pydantic magic works.
-    # The Pydantic model expects list of strings for allergies/dislikes.
-    # The SQLAlchemy model has list of Allergy/Ingredient objects.
-    # We might need a custom mapping or property on the model.
-    # For simplicity, I'll construct it manually here.)
+        return UserPreferencesDto(userId=user_id, allergies=[], dislikes=[])
     
     return UserPreferencesDto(
         prefId=prefs.pref_id,
         userId=prefs.user_id,
         diet=prefs.diet.diet_name if prefs.diet else None,
-        allergies=[a.allergy_name for a in prefs.allergies],
+        allergies=[a.name for a in prefs.allergies],
         dislikes=[d.name for d in prefs.dislikes],
-        servings=prefs.servings,
         budget=prefs.budget
     )
 
@@ -58,8 +49,7 @@ def set_preferences(
         prefId=prefs.pref_id,
         userId=prefs.user_id,
         diet=prefs.diet.diet_name if prefs.diet else None,
-        allergies=[a.allergy_name for a in prefs.allergies],
+        allergies=[a.name for a in prefs.allergies],
         dislikes=[d.name for d in prefs.dislikes],
-        servings=prefs.servings,
         budget=prefs.budget
     )

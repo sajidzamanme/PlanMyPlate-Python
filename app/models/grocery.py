@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -19,7 +19,7 @@ class GroceryListIngredient(Base):
     id = Column(Integer, primary_key=True, index=True)
     list_id = Column(Integer, ForeignKey("grocery_list.list_id"), nullable=False)
     ing_id = Column(Integer, ForeignKey("ingredients.ing_id"), nullable=False)
-    quantity = Column(Integer, default=1)
+    quantity = Column(Float, default=1.0)
     unit = Column(String(50), default="unit")
     
     grocery_list = relationship("GroceryList", back_populates="items")

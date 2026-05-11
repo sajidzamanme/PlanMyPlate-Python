@@ -1,6 +1,6 @@
-from typing import Generator
+from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
@@ -10,7 +10,9 @@ from app import crud
 from app.db.session import SessionLocal
 from app.models.user import User
 
-reusable_oauth2 = HTTPBearer()
+reusable_oauth2 = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_PREFIX}/auth/token"
+)
 
 def get_db() -> Generator:
     try:
@@ -20,11 +22,9 @@ def get_db() -> Generator:
         db.close()
 
 def get_current_user(
-    db: Session = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2),
+    db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
 ) -> User:
     try:
-        token = credentials.credentials
         payload = jwt.decode(
             token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
         )
