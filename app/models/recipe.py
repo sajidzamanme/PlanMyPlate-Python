@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -9,6 +9,10 @@ class Recipe(Base):
     name = Column(String(200), nullable=False)
     description = Column(Text)
     calories = Column(Integer)
+    protein = Column(Float, nullable=True)    # grams per serving
+    carbs = Column(Float, nullable=True)      # grams per serving
+    fat = Column(Float, nullable=True)        # grams per serving
+    fiber = Column(Float, nullable=True)      # grams per serving
     prep_time = Column(Integer)
     cook_time = Column(Integer)
     servings = Column(Integer)
