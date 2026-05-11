@@ -5,7 +5,7 @@ from .ingredient import Ingredient
 
 class InvItemCreateRequest(BaseModel):
     ingId: int = Field(alias="ing_id")
-    quantity: int
+    quantity: float
     unit: str = "unit"
     expiryDate: Optional[date] = Field(None, alias="expiry_date")
     
@@ -14,7 +14,7 @@ class InvItemCreateRequest(BaseModel):
 class InvItemResponse(BaseModel):
     itemId: int                     = Field(alias="item_id")
     ingredient: Ingredient
-    quantity: Optional[int]         = None
+    quantity: Optional[float]         = None
     unit: Optional[str]             = None
     dateAdded: Optional[date]       = Field(None, alias="date_added")
     expiryDate: Optional[date]      = Field(None, alias="expiry_date")

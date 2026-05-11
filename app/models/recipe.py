@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -24,7 +24,7 @@ class RecipeIngredient(Base):
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, ForeignKey("recipe.recipe_id"), nullable=False)
     ing_id = Column(Integer, ForeignKey("ingredients.ing_id"), nullable=False)
-    quantity = Column(Integer)
+    quantity = Column(Float)
     unit = Column(String(50))
     
     recipe = relationship("Recipe", back_populates="recipe_ingredients")

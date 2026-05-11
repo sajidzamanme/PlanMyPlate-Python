@@ -23,6 +23,7 @@ class MealSlot(Base):
     slot_index = Column(Integer, nullable=False)
     meal_type = Column(String(20), nullable=False)
     day_number = Column(Integer, nullable=False)
+    servings_multiplier = Column(Integer, nullable=False, default=1)
     
     meal_plan = relationship("MealPlan", back_populates="slots")
     recipe = relationship("Recipe")

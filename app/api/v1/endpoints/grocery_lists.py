@@ -31,35 +31,6 @@ def get_grocery_list(
         raise HTTPException(status_code=400, detail="Not enough permissions")
     return grocery_list
 
-@router.post("/user/{user_id}", response_model=GroceryListResponse, status_code=201)
-def create_grocery_list(
-    *,
-    db: Session = Depends(deps.get_db),
-    user_id: int,
-    grocery_list_in: GroceryListCreate,
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    if user_id != current_user.user_id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
-    # Using generic create but need to set user_id
-    # Generic create uses model(**obj_in_data). GroceryListCreate has status only.
-    # I should use custom create method if needed or update obj_in_data.
-    # But crud base `create` takes `obj_in`.
-    # I can create a new object manually or override create.
-    # Let's override create logic here by manually creating model.
-    from app.models.grocery import GroceryList
-    from datetime import date
-    
-    grocery_list = GroceryList(
-        user_id=user_id,
-        date_created=date.today(),
-        status=grocery_list_in.status
-    )
-    db.add(grocery_list)
-    db.commit()
-    db.refresh(grocery_list)
-    return grocery_list
-
 @router.put("/{id}", response_model=GroceryListResponse)
 def update_grocery_list(
     *,
