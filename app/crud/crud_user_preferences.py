@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.user import UserPreferences, User
 from app.schemas.user import UserPreferencesDto
-from app.models.reference import Diet, Allergy
+from app.models.reference import Diet
 from app.models.ingredient import Ingredient
-from app.crud.crud_reference import diet as crud_diet, allergy as crud_allergy
+from app.crud.crud_reference import diet as crud_diet
 from app.crud.crud_ingredient import ingredient as crud_ingredient
 
 class CRUDUserPreferences(CRUDBase[UserPreferences, UserPreferencesDto, UserPreferencesDto]):
@@ -28,9 +28,9 @@ class CRUDUserPreferences(CRUDBase[UserPreferences, UserPreferencesDto, UserPref
         if obj_in.allergies:
             allergies = []
             for name in obj_in.allergies:
-                allergy = crud_allergy.get_by_name(db, name=name.strip())
-                if allergy:
-                    allergies.append(allergy)
+                ing = crud_ingredient.get_by_name(db, name=name.strip())
+                if ing:
+                    allergies.append(ing)
             db_obj.allergies = allergies
             
         if obj_in.dislikes:
@@ -40,9 +40,6 @@ class CRUDUserPreferences(CRUDBase[UserPreferences, UserPreferencesDto, UserPref
                 if ing:
                     dislikes.append(ing)
             db_obj.dislikes = dislikes
-            
-        if obj_in.servings is not None:
-            db_obj.servings = obj_in.servings
             
         if obj_in.budget is not None:
             db_obj.budget = obj_in.budget

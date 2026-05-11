@@ -1,6 +1,5 @@
-from typing import Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Form
-from fastapi.security import OAuth2PasswordRequestForm
+from typing import Any
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 import secrets
@@ -23,6 +22,7 @@ def sign_up(
     db: Session = Depends(deps.get_db),
     request: SignUpRequest
 ) -> Any:
+    # Check for duplicate email
     user = crud.user.get_by_email(db, email=request.email)
     if user:
         raise HTTPException(
@@ -30,20 +30,34 @@ def sign_up(
             detail="User with this email already exists"
         )
     
+    # Check for duplicate phone
+    existing_phone = crud.user.get_by_phone(db, phone=request.phone)
+    if existing_phone:
+        raise HTTPException(
+            status_code=400,
+            detail="User with this phone number already exists"
+        )
+    
     user_in = UserCreate(
         email=request.email,
         password=request.password,
-        name=request.name
+        firstName=request.firstName,
+        lastName=request.lastName,
+        phone=request.phone,
+        dateOfBirth=request.dateOfBirth
     )
     user = crud.user.create(db, obj_in=user_in)
     
     access_token = security.create_access_token(user.email)
     
     return AuthResponse(
-        token=access_token,
+        access_token=access_token,
         email=user.email,
-        name=user.name,
-        userId=user.user_id
+        firstName=user.first_name,
+        lastName=user.last_name,
+        userId=user.user_id,
+        phone=user.phone,
+        dateOfBirth=user.date_of_birth
     )
 
 @router.post("/signin", response_model=AuthResponse)
@@ -53,43 +67,22 @@ def sign_in(
     request: SignInRequest
 ) -> Any:
     user = crud.user.authenticate(
-        db, email=request.email, password=request.password
+        db, identifier=request.email, password=request.password
     )
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise HTTPException(status_code=400, detail="Incorrect email/phone or password")
     
     access_token = security.create_access_token(user.email)
     
     return AuthResponse(
-        token=access_token,
         access_token=access_token,
         token_type="bearer",
         email=user.email,
-        name=user.name,
-        userId=user.user_id
-    )
-
-@router.post("/token", response_model=AuthResponse)
-def login_for_access_token(
-    *,
-    db: Session = Depends(deps.get_db),
-    form_data: OAuth2PasswordRequestForm = Depends()
-) -> Any:
-    user = crud.user.authenticate(
-        db, email=form_data.username, password=form_data.password
-    )
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
-    
-    access_token = security.create_access_token(user.email)
-    
-    return AuthResponse(
-        token=access_token,
-        access_token=access_token,
-        token_type="bearer",
-        email=user.email,
-        name=user.name,
-        userId=user.user_id
+        firstName=user.first_name,
+        lastName=user.last_name,
+        userId=user.user_id,
+        phone=user.phone,
+        dateOfBirth=user.date_of_birth
     )
 
 @router.post("/forgot-password", response_model=MessageResponse)
@@ -124,7 +117,13 @@ def reset_password(
     if not user:
         raise HTTPException(status_code=400, detail="Invalid reset token")
     
-    if not user.reset_token_expiry or datetime.now(timezone.utc) > user.reset_token_expiry:
+    # Handle timezone comparison - ensure both datetimes are timezone-aware
+    current_time = datetime.now(timezone.utc)
+    expiry_time = user.reset_token_expiry
+    if expiry_time and expiry_time.tzinfo is None:
+        expiry_time = expiry_time.replace(tzinfo=timezone.utc)
+
+    if not user.reset_token_expiry or current_time > expiry_time:
         raise HTTPException(status_code=400, detail="Reset token expired")
     
     user.password = security.get_password_hash(request.newPassword)
