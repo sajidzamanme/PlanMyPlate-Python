@@ -11,6 +11,10 @@ class RecipeCreateDto(BaseModel):
     name: str
     description: Optional[str] = None
     calories: Optional[int] = Field(None, ge=50, le=5000)
+    protein: Optional[float] = None
+    carbs: Optional[float] = None
+    fat: Optional[float] = None
+    fiber: Optional[float] = None
     prepTime: Optional[int] = Field(None, ge=0, le=1440)
     cookTime: Optional[int] = Field(None, ge=0, le=1440)
     servings: Optional[int] = Field(1, ge=1, le=50)
@@ -31,6 +35,10 @@ class RecipeResponse(BaseModel):
     name: str
     description: Optional[str] = None
     calories: Optional[int] = None
+    protein: Optional[float] = None
+    carbs: Optional[float] = None
+    fat: Optional[float] = None
+    fiber: Optional[float] = None
     prepTime: Optional[int]  = Field(None, alias="prep_time")
     cookTime: Optional[int]  = Field(None, alias="cook_time")
     servings: Optional[int] = None
@@ -39,4 +47,3 @@ class RecipeResponse(BaseModel):
     recipeIngredients: List[RecipeIngredientResponse] = Field([], alias="recipe_ingredients")
     
     model_config = {"from_attributes": True, "populate_by_name": True}
-
