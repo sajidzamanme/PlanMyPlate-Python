@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 AI endpoints — recipe and meal plan generation via Google Gemini.
 """
@@ -24,27 +23,11 @@ router = APIRouter()
 # POST /ai/generate-recipe
 # ---------------------------------------------------------------------------
 
-=======
-from typing import Any, Optional
-from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
-from app.api import deps
-from app.schemas.ai import AiRecipeRequestDto
-from app.schemas.recipe import RecipeResponse
-from app.schemas.meal_plan import MealPlanResponse
-from app.services.gemini_service import gemini_service
-from app.models.user import User
-
-router = APIRouter()
-
->>>>>>> 8bfbfb597cfd63ddae450134a8d51ecded8fee4b
 @router.post("/generate-recipe", response_model=RecipeResponse, status_code=201)
 def generate_recipe(
     *,
     db: Session = Depends(deps.get_db),
     request: AiRecipeRequestDto,
-<<<<<<< HEAD
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
@@ -74,17 +57,11 @@ def generate_recipe(
 # ---------------------------------------------------------------------------
 # POST /ai/generate-meal-plan
 # ---------------------------------------------------------------------------
-=======
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    return gemini_service.generate_recipe(db, request=request)
->>>>>>> 8bfbfb597cfd63ddae450134a8d51ecded8fee4b
 
 @router.post("/generate-meal-plan", response_model=MealPlanResponse, status_code=201)
 def generate_meal_plan(
     *,
     db: Session = Depends(deps.get_db),
-<<<<<<< HEAD
     userId: int = Query(..., description="ID of the user to generate the plan for"),
     startDate: Optional[str] = Query(None, description="Start date (YYYY-MM-DD), defaults to today"),
     current_user: User = Depends(deps.get_current_user),
@@ -112,7 +89,6 @@ def generate_meal_plan(
 
     # Fetch user preferences for personalised prompt
     prefs = crud.user_preferences.get_by_user_id(db, user_id=userId)
-    # prefs.diet is a Diet ORM object; .allergies are Allergy objects; .dislikes are Ingredient objects
     diet = prefs.diet.diet_name if prefs and prefs.diet else None
     allergies = prefs.allergies if prefs and prefs.allergies else []
     dislikes = prefs.dislikes if prefs and prefs.dislikes else []
@@ -187,12 +163,3 @@ def generate_meal_plan(
         )
 
     return meal_plan
-=======
-    userId: int,
-    startDate: Optional[date] = Query(None, description="Start date in YYYY-MM-DD format (defaults to today)"),
-    current_user: User = Depends(deps.get_current_user)
-) -> Any:
-    if userId != current_user.user_id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
-    return gemini_service.generate_weekly_meal_plan(db, user_id=userId, start_date=startDate)
->>>>>>> 8bfbfb597cfd63ddae450134a8d51ecded8fee4b
