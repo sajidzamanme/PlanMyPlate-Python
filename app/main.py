@@ -47,6 +47,8 @@ app = FastAPI(
         {"name": "reference-data",   "description": "Static reference lists: diets, ingredient tags"},
         {"name": "files",            "description": "Image upload and static file serving"},
         {"name": "ai",               "description": "AI-powered recipe and meal plan generation via Google Gemini"},
+        {"name": "ratings",          "description": "Rate recipes (1–5 stars) with optional text reviews"},
+        {"name": "favorites",        "description": "Save and manage favorite recipes for personalized recommendations"},
     ],
 )
 

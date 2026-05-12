@@ -11,6 +11,8 @@ from app.api.v1.endpoints import (
     inventory,
     files,
     ai,
+    ratings,
+    favorites,
 )
 
 # Optional endpoints added by origin/main
@@ -44,6 +46,8 @@ api_router.include_router(grocery_lists.router,    prefix="/grocery-lists",    t
 api_router.include_router(inventory.router,        prefix="/inventory",        tags=["Inventory"])
 api_router.include_router(files.router,            prefix="/files",            tags=["Files"])
 api_router.include_router(ai.router,               prefix="/ai",               tags=["AI"])
+api_router.include_router(ratings.router,          prefix="/ratings",          tags=["Ratings"])
+api_router.include_router(favorites.router,        prefix="/favorites",        tags=["Favorites"])
 
 if _has_reference_data:
     api_router.include_router(reference_data.router, prefix="/reference-data", tags=["Reference Data"])

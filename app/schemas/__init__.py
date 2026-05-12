@@ -6,3 +6,5 @@ from .meal_plan import MealPlanRequestDto, MealPlanResponse, MealSlotResponse, M
 from .grocery import GroceryListCreate, GroceryListResponse, GroceryListItemResponse, PurchaseRequestDto, PurchaseItemInfo, UpdateItemRequestDto
 from .inventory import InvItemCreateRequest, InvItemResponse, InventoryResponse
 from .ai import AiRecipeRequestDto
+from .rating import RateRecipeRequest, RecipeRatingResponse, RecipeRatingSummary
+from .favorite import AddFavoriteRequest, UserFavoriteResponse, FavoriteStatusResponse
