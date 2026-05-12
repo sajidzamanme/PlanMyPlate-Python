@@ -7,4 +7,6 @@ from .crud_meal_plan import meal_plan
 from .crud_grocery_list import grocery_list, grocery_list_item
 from .crud_inventory import inventory, inv_item
 from .crud_expiry import expiry
+from .crud_rating import rating
+from .crud_favorite import favorite
 from .base import CRUDBase
