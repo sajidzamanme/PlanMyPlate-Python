@@ -51,5 +51,9 @@ class UserPreferencesDto(BaseModel):
     allergies: List[str] = []
     dislikes: List[str] = []
     budget: Optional[Decimal] = None
+    height: Optional[Decimal] = None       # in cm
+    weight: Optional[Decimal] = None       # in kg
+    gender: Optional[str] = None           # male, female, other
+    bmi: Optional[float] = None            # computed: weight(kg) / height(m)^2
 
     model_config = {"from_attributes": True, "populate_by_name": True}

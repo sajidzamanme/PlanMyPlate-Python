@@ -45,6 +45,9 @@ class UserPreferences(Base):
     user_id = Column(Integer, ForeignKey("users.user_id"), unique=True, nullable=False)
     diet_id = Column(Integer, ForeignKey("diets.diet_id"))
     budget = Column(Numeric(10, 2))
+    height = Column(Numeric(5, 2))  # in cm
+    weight = Column(Numeric(5, 2))  # in kg
+    gender = Column(String(10))     # male, female, other
     
     user = relationship("User", back_populates="preferences")
     diet = relationship("Diet")
