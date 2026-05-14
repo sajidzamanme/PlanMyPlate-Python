@@ -55,5 +55,6 @@ class UserPreferencesDto(BaseModel):
     weight: Optional[Decimal] = None       # in kg
     gender: Optional[str] = None           # male, female, other
     bmi: Optional[float] = None            # computed: weight(kg) / height(m)^2
+    bmi_category: Optional[str] = None     # age-aware category (e.g. "Normal weight")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
