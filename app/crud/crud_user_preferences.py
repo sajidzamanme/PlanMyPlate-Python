@@ -43,6 +43,15 @@ class CRUDUserPreferences(CRUDBase[UserPreferences, UserPreferencesDto, UserPref
             
         if obj_in.budget is not None:
             db_obj.budget = obj_in.budget
+
+        if obj_in.height is not None:
+            db_obj.height = obj_in.height
+
+        if obj_in.weight is not None:
+            db_obj.weight = obj_in.weight
+
+        if obj_in.gender is not None:
+            db_obj.gender = obj_in.gender
             
         db.commit()
         db.refresh(db_obj)

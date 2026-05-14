@@ -216,7 +216,10 @@ CREATE TABLE `user_preferences` (
   `pref_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `diet_id` int(11) DEFAULT NULL,
-  `budget` decimal(10,2) DEFAULT NULL
+  `budget` decimal(10,2) DEFAULT NULL,
+  `height` decimal(5,2) DEFAULT NULL COMMENT 'Height in cm',
+  `weight` decimal(5,2) DEFAULT NULL COMMENT 'Weight in kg',
+  `gender` varchar(10) DEFAULT NULL COMMENT 'male, female, or other'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
