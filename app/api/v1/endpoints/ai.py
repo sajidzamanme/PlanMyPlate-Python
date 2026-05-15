@@ -14,7 +14,7 @@ from app.models.user import User
 from app.schemas.ai import AiRecipeRequestDto
 from app.schemas.recipe import RecipeResponse
 from app.schemas.meal_plan import MealPlanResponse
-from app.services import gemini_service
+from app.services.gemini_service import gemini_service
 
 router = APIRouter()
 
