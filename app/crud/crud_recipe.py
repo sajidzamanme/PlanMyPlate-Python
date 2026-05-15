@@ -20,7 +20,6 @@ class CRUDRecipe(CRUDBase[Recipe, RecipeCreateDto, RecipeCreateDto]):
             fiber=obj_in.fiber,
             prep_time=obj_in.prepTime,
             cook_time=obj_in.cookTime,
-            servings=obj_in.servings,
             instructions=obj_in.instructions,
             image_url=obj_in.imageUrl
         )

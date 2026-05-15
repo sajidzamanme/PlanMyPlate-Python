@@ -17,7 +17,6 @@ class RecipeCreateDto(BaseModel):
     fiber: Optional[float] = None
     prepTime: Optional[int] = Field(None, ge=0, le=1440)
     cookTime: Optional[int] = Field(None, ge=0, le=1440)
-    servings: Optional[int] = Field(1, ge=1, le=50)
     instructions: Optional[str] = None
     imageUrl: Optional[str] = None
     ingredients: List[RecipeIngredientDto] = []
@@ -41,7 +40,6 @@ class RecipeResponse(BaseModel):
     fiber: Optional[float] = None
     prepTime: Optional[int]  = Field(None, alias="prep_time")
     cookTime: Optional[int]  = Field(None, alias="cook_time")
-    servings: Optional[int] = None
     instructions: Optional[str] = None
     imageUrl: Optional[str]  = Field(None, alias="image_url")
     recipeIngredients: List[RecipeIngredientResponse] = Field([], alias="recipe_ingredients")
