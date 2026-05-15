@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jan 30, 2026 at 00:00 AM
+-- Generation Time: May 15, 2026 at 00:00 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -155,6 +155,7 @@ CREATE TABLE `meal_slot` (
 
 --
 -- Table structure for table `recipe`
+-- Added nutritional macro columns: protein, carbs, fat, fiber (all per serving, in grams).
 --
 
 CREATE TABLE `recipe` (
@@ -162,6 +163,10 @@ CREATE TABLE `recipe` (
   `name` varchar(200) NOT NULL,
   `description` text DEFAULT NULL,
   `calories` int(11) DEFAULT NULL,
+  `protein` float DEFAULT NULL COMMENT 'Protein in grams per serving',
+  `carbs` float DEFAULT NULL COMMENT 'Carbohydrates in grams per serving',
+  `fat` float DEFAULT NULL COMMENT 'Fat in grams per serving',
+  `fiber` float DEFAULT NULL COMMENT 'Dietary fiber in grams per serving',
   `prep_time` int(11) DEFAULT NULL,
   `cook_time` int(11) DEFAULT NULL,
   `servings` int(11) DEFAULT NULL,
@@ -182,6 +187,39 @@ CREATE TABLE `recipe_ingredients` (
   `quantity` float DEFAULT NULL,
   `unit` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `recipe_ratings`
+-- Stores individual user ratings (1–5 stars) and optional text reviews for recipes.
+-- One rating per user per recipe (enforced by unique key).
+--
+
+CREATE TABLE `recipe_ratings` (
+  `rating_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `recipe_id` int(11) NOT NULL,
+  `rating` smallint(6) NOT NULL COMMENT '1 to 5 stars',
+  `review` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_favorites`
+-- Stores recipes that a user has saved/bookmarked as favourites.
+-- One record per user-recipe pair (enforced by unique key).
+--
+
+CREATE TABLE `user_favorites` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `recipe_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -301,6 +339,16 @@ ALTER TABLE `recipe_ingredients`
   ADD KEY `recipe_id` (`recipe_id`),
   ADD KEY `ing_id` (`ing_id`);
 
+ALTER TABLE `recipe_ratings`
+  ADD PRIMARY KEY (`rating_id`),
+  ADD UNIQUE KEY `uq_user_recipe_rating` (`user_id`,`recipe_id`),
+  ADD KEY `recipe_id` (`recipe_id`);
+
+ALTER TABLE `user_favorites`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_user_recipe_favorite` (`user_id`,`recipe_id`),
+  ADD KEY `recipe_id` (`recipe_id`);
+
 ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`),
   ADD UNIQUE KEY `email` (`email`),
@@ -356,6 +404,12 @@ ALTER TABLE `recipe`
 ALTER TABLE `recipe_ingredients`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+ALTER TABLE `recipe_ratings`
+  MODIFY `rating_id` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `user_favorites`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `users`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -394,6 +448,14 @@ ALTER TABLE `meal_slot`
 ALTER TABLE `recipe_ingredients`
   ADD CONSTRAINT `fk_ri_recipe` FOREIGN KEY (`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_ri_ingredient` FOREIGN KEY (`ing_id`) REFERENCES `ingredients`(`ing_id`) ON DELETE CASCADE;
+
+ALTER TABLE `recipe_ratings`
+  ADD CONSTRAINT `fk_rr_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_rr_recipe` FOREIGN KEY (`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON DELETE CASCADE;
+
+ALTER TABLE `user_favorites`
+  ADD CONSTRAINT `fk_uf_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_uf_recipe` FOREIGN KEY (`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON DELETE CASCADE;
 
 ALTER TABLE `user_preferences`
   ADD CONSTRAINT `fk_up_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE,

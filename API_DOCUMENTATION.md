@@ -191,9 +191,16 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "diet": "Vegan",
     "allergies": ["Peanuts", "Shellfish"],
     "dislikes": ["Mushrooms"],
-    "budget": 150.00
+    "budget": 150.00,
+    "height": 170.00,
+    "weight": 65.00,
+    "gender": "female",
+    "bmi": 22.5,
+    "bmi_category": "Normal weight"
   }
   ```
+  > `bmi` is computed server-side as `weight(kg) / height(m)²`. Returns `null` if height or weight is missing.  
+  > `bmi_category` is age-aware: youth (<20), standard adult (20–64), senior (65+) thresholds are applied automatically.
 
 ### Set/Update Preferences
 - **URL:** `/api/user-preferences/{user_id}`
@@ -206,9 +213,15 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "diet": "Vegan",
     "allergies": ["Peanuts"],
     "dislikes": [],
-    "budget": 200.00
+    "budget": 200.00,
+    "height": 170.00,
+    "weight": 65.00,
+    "gender": "female"
   }
   ```
+  > `gender` accepted values: `"male"`, `"female"`, `"other"`.  
+  > `height` in **cm**, `weight` in **kg**.  
+  > `bmi` and `bmi_category` are always computed by the server — do not send them.
 - **Response Body:** Updated preferences object (same structure as GET).
 
 ---
@@ -227,6 +240,10 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
       "name": "Chicken Bhuna",
       "description": "Spicy dry chicken curry",
       "calories": 520,
+      "protein": 42.0,
+      "carbs": 8.0,
+      "fat": 18.0,
+      "fiber": 1.5,
       "prepTime": 15,
       "cookTime": 35,
       "servings": 3,
@@ -243,6 +260,7 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     }
   ]
   ```
+  > `protein`, `carbs`, `fat`, `fiber` are all **per serving** in grams. Any field may be `null` if not provided.
 
 ### Search Recipes
 - **URL:** `/api/recipes/search?name=chicken`
@@ -263,6 +281,10 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "name": "Custom Pasta",
     "description": "My special pasta recipe",
     "calories": 450,
+    "protein": 20.0,
+    "carbs": 55.0,
+    "fat": 12.0,
+    "fiber": 3.0,
     "prepTime": 30,
     "cookTime": 20,
     "servings": 4,
@@ -277,6 +299,7 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     ]
   }
   ```
+  > `protein`, `carbs`, `fat`, `fiber` are optional — all in grams per serving.
 - **Response Body (201 Created):** Created Recipe object with assigned `recipeId`.
 
 ### Get Recipe by ID
@@ -805,7 +828,139 @@ Permanently removes an item from the inventory.
 
 ---
 
-## 13. Admin Endpoints
+## 13. Recipe Ratings
+Rate recipes and retrieve rating summaries. All write endpoints require authentication.
+
+### Rate a Recipe (Create or Update)
+Submit a 1–5 star rating with an optional text review. If the user has already rated this recipe, the existing rating is updated (upsert).
+
+- **URL:** `/api/ratings/`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Request Body:**
+  ```json
+  {
+    "recipeId": 1,
+    "rating": 4,
+    "review": "Really flavourful, would make again!"
+  }
+  ```
+  > `rating`: Integer from **1 to 5** (required).  
+  > `review`: Optional free-text string.
+- **Response Body (201 Created):**
+  ```json
+  {
+    "ratingId": 7,
+    "userId": 1,
+    "recipeId": 1,
+    "rating": 4,
+    "review": "Really flavourful, would make again!",
+    "createdAt": "2026-05-15T10:30:00",
+    "updatedAt": "2026-05-15T10:30:00"
+  }
+  ```
+
+### Get My Rating for a Recipe
+Retrieve the current user's own rating for a specific recipe.
+
+- **URL:** `/api/ratings/my/{recipe_id}`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:** `RecipeRatingResponse` object (same structure as above). Returns **404** if the user hasn't rated this recipe yet.
+
+### Get Rating Summary for a Recipe
+Get the aggregated average rating and total count for any recipe. No authentication required.
+
+- **URL:** `/api/ratings/recipe/{recipe_id}`
+- **Method:** `GET`
+- **Response Body:**
+  ```json
+  {
+    "recipeId": 1,
+    "averageRating": 4.3,
+    "totalRatings": 12
+  }
+  ```
+  > Returns **404** if the recipe does not exist.
+
+### Delete My Rating
+Remove the current user's rating for a recipe.
+
+- **URL:** `/api/ratings/{recipe_id}`
+- **Method:** `DELETE`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:**
+  ```json
+  { "message": "Rating deleted successfully" }
+  ```
+  > Returns **404** if no rating exists for this user/recipe pair.
+
+---
+
+## 14. Favourites
+Save and manage favourite recipes. All endpoints require authentication.
+
+### Add a Recipe to Favourites
+- **URL:** `/api/favorites/{recipe_id}`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body (201 Created):**
+  ```json
+  {
+    "id": 3,
+    "userId": 1,
+    "recipeId": 5,
+    "recipe": {
+      "recipeId": 5,
+      "name": "Rui Machher Jhol",
+      "description": "Light fish curry",
+      "calories": 450,
+      "protein": null,
+      "carbs": null,
+      "fat": null,
+      "fiber": null,
+      "prepTime": 15,
+      "cookTime": 30,
+      "servings": 4,
+      "imageUrl": "https://...",
+      "recipeIngredients": []
+    },
+    "createdAt": "2026-05-15T10:45:00"
+  }
+  ```
+  > Returns **404** if recipe does not exist. Returns **409** if the recipe is already in favourites.
+
+### Remove a Recipe from Favourites
+- **URL:** `/api/favorites/{recipe_id}`
+- **Method:** `DELETE`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:**
+  ```json
+  { "message": "Favorite removed successfully" }
+  ```
+  > Returns **404** if the recipe was not in favourites.
+
+### List My Favourite Recipes
+- **URL:** `/api/favorites/`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:** `skip` (default: 0), `limit` (default: 100)
+- **Response Body:** List of `UserFavoriteResponse` objects (same structure as Add response above).
+
+### Check Favourite Status
+Quickly check whether a specific recipe is in the current user's favourites.
+
+- **URL:** `/api/favorites/{recipe_id}/status`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <token>`
+- **Response Body:**
+  ```json
+  { "isFavorite": true }
+  ```
+
+---
+
+## 15. Admin Endpoints
 
 Admin endpoints for managing reference data and performing administrative tasks. Require authentication (`Authorization: Bearer <token>`).
 
@@ -864,7 +1019,7 @@ Look up any user's profile.
 
 ---
 
-## 14. Error Handling
+## 16. Error Handling
 
 The API uses standard HTTP status codes and returns structured error responses.
 
