@@ -53,7 +53,6 @@ _RECIPE_JSON_SCHEMA = """{
   "fiber": <float — grams of dietary fiber per serving>,
   "prepTime": <integer — preparation time in minutes>,
   "cookTime": <integer — cooking time in minutes>,
-  "servings": <integer — number of servings>,
   "instructions": "<full step-by-step cooking instructions (string)>",
   "ingredients": [
     {
@@ -86,8 +85,6 @@ def _build_recipe_prompt(req: AiRecipeRequestDto) -> str:
         constraints.append(
             f"- Maximum total cooking time (prep + cook): {req.maxCookingTime} minutes"
         )
-    constraints.append(f"- Number of servings: {req.servings}")
-
     constraint_block = "\n".join(constraints) if constraints else "  (no specific constraints)"
 
     return f"""You are a professional chef and nutritionist. Your task is to create ONE recipe.
@@ -172,7 +169,6 @@ class GeminiAiService:
             fiber=data.get("fiber"),
             prepTime=data.get("prepTime"),
             cookTime=data.get("cookTime"),
-            servings=data.get("servings", request.servings),
             instructions=data.get("instructions"),
             imageUrl=None,
             ingredients=ingredient_dtos,
@@ -184,7 +180,6 @@ class GeminiAiService:
         diet: Optional[str],
         allergies: list[str],
         dislikes: list[str],
-        servings: int,
     ) -> list[dict]:
         """
         Call Gemini to generate a 7-day meal plan.
@@ -207,7 +202,6 @@ class GeminiAiService:
             constraints.append(f"- Avoid allergens: {', '.join(allergies)}")
         if dislikes:
             constraints.append(f"- Disliked ingredients (avoid): {', '.join(dislikes)}")
-        constraints.append(f"- Servings per meal: {servings}")
         constraint_block = "\n".join(constraints) if constraints else "  (no specific constraints)"
 
         prompt = f"""You are a professional nutritionist. Create a balanced 7-day meal plan (Breakfast, Lunch, Dinner for each day = 21 meals total).

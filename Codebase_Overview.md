@@ -16,7 +16,6 @@ PlanMyPlate-Python/
 ├── requirements.txt              # Python packages (FastAPI, SQLAlchemy, etc.)
 ├── plan_my_plate.sql             # Full DB schema: tables, indexes, foreign keys
 ├── entries.sql                   # Seed data: 50 recipes, 36 ingredients, etc.
-├── migration_add_serving_multiplier.sql  # Adds servings_multiplier column to meal_slot
 ├── uploads/                      # Uploaded image files
 └── app/
     ├── main.py                   # FastAPI app creation, CORS, static files, router mount
@@ -259,7 +258,7 @@ FastAPI → endpoints/recipes.py → deps.get_db() → crud.recipe.search_by_nam
 | Table | Key Columns | Relationships |
 |-------|-------------|---------------|
 | `ingredients` | `ing_id`, `name`, `price` | M2M `tags`, used in recipes/grocery/inventory |
-| `recipe` | `recipe_id`, `name`, `description`, `calories`, `prep_time`, `cook_time`, `servings`, `instructions`, `image_url` | → `recipe_ingredients` |
+| `recipe` | `recipe_id`, `name`, `description`, `calories`, `prep_time`, `cook_time`, `instructions`, `image_url` | → `recipe_ingredients` |
 | `recipe_ingredients` | `id`, `recipe_id`, `ing_id`, `quantity`, `unit` | → `recipe`, `ingredients` |
 
 ### Meal Plans

@@ -92,7 +92,6 @@ def generate_meal_plan(
     diet = prefs.diet.diet_name if prefs and prefs.diet else None
     allergies = prefs.allergies if prefs and prefs.allergies else []
     dislikes = prefs.dislikes if prefs and prefs.dislikes else []
-    servings = prefs.servings if prefs and prefs.servings else 2
 
     allergy_names = [a.allergy_name for a in allergies]
     dislike_names = [d.name for d in dislikes]
@@ -102,7 +101,6 @@ def generate_meal_plan(
             diet=diet,
             allergies=allergy_names,
             dislikes=dislike_names,
-            servings=servings,
         )
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc))

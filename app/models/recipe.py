@@ -15,7 +15,6 @@ class Recipe(Base):
     fiber = Column(Float, nullable=True)      # grams per serving
     prep_time = Column(Integer)
     cook_time = Column(Integer)
-    servings = Column(Integer)
     instructions = Column(Text)
     image_url = Column(String(255))
     

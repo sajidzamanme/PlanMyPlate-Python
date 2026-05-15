@@ -246,7 +246,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
       "fiber": 1.5,
       "prepTime": 15,
       "cookTime": 35,
-      "servings": 3,
       "instructions": "...",
       "imageUrl": "https://...",
       "recipeIngredients": [
@@ -287,7 +286,6 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
     "fiber": 3.0,
     "prepTime": 30,
     "cookTime": 20,
-    "servings": 4,
     "instructions": "1. Boil water\n2. Cook pasta\n3. Add sauce",
     "imageUrl": "https://example.com/custom_pasta.jpg",
     "ingredients": [
@@ -637,7 +635,6 @@ Generate a custom recipe using Google Gemini AI based on user preferences and co
     "allergies": ["peanuts"],
     "dietaryPreference": "None",
     "mood": "Comfort Food",
-    "servings": 4,
     "maxCookingTime": 45
   }
   ```
@@ -649,7 +646,6 @@ Generate a custom recipe using Google Gemini AI based on user preferences and co
 - `allergies` (optional): List of allergens to avoid
 - `dietaryPreference` (optional): Dietary restriction (e.g., Vegan, Vegetarian, Keto)
 - `mood` (optional): Occasion or mood (e.g., Comfort Food, Quick & Easy)
-- `servings` (required): Number of servings (1-20)
 - `maxCookingTime` (optional): Maximum total cooking time in minutes (5-300)
 
 - **Response Body (201 Created):** Created Recipe object (same structure as Recipe endpoints).
@@ -921,7 +917,6 @@ Save and manage favourite recipes. All endpoints require authentication.
       "fiber": null,
       "prepTime": 15,
       "cookTime": 30,
-      "servings": 4,
       "imageUrl": "https://...",
       "recipeIngredients": []
     },
