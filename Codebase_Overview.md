@@ -358,12 +358,12 @@ Resources extend this with resource-specific queries:
 
 ## 8. Services Layer (Gemini AI)
 
-`app/services/gemini_service.py` — integrates with Google Gemini 2.5 Flash.
+`app/services/gemini_service.py` — integrates with Google Gemini (uses `gemini-2.5-flash`).
 
 ### How it works:
 1. Builds a prompt describing what recipe/meal plan to generate
 2. Includes database context (existing recipe names + ingredients) so AI can reuse them
-3. Sends prompt to `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
+3.   Sends prompt to Gemini API (model: `gemini-2.5-flash`)
 4. Parses JSON from AI response
 5. Creates/saves Recipe and Ingredient records in the database
 
