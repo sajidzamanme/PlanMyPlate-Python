@@ -9,34 +9,30 @@ Handles:
 import json
 import re
 import logging
-from typing import Optional, List, Any
-from datetime import date
-import requests
+from typing import Optional
 
-import google.generativeai as genai
+from google import genai
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.schemas.ai import AiRecipeRequestDto
 from app.schemas.recipe import RecipeCreateDto, RecipeIngredientDto
-from app.models.recipe import Recipe, RecipeIngredient
-from app.models.meal_plan import MealPlan, MealSlot
-from app.schemas.meal_plan import MealPlanRequestDto
 
 logger = logging.getLogger(__name__)
+
+GEMINI_MODEL = "gemini-2.5-flash"
+
 
 # ---------------------------------------------------------------------------
 # Gemini client initialisation
 # ---------------------------------------------------------------------------
 
-def _get_model() -> genai.GenerativeModel:
-    """Return a configured Gemini GenerativeModel instance."""
+def _get_client() -> genai.Client:
     if not settings.GEMINI_API_KEY:
         raise ValueError(
             "GEMINI_API_KEY is not set. Add it to your .env file to use AI features."
         )
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    return genai.GenerativeModel("gemini-1.5-flash")
+    return genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
 # ---------------------------------------------------------------------------
@@ -104,33 +100,28 @@ OUTPUT RULES:
 
 def _parse_json_from_text(text: str) -> dict:
     """Extract and parse the first JSON object found in a string."""
-    # Strip markdown fences if Gemini wraps despite instructions
     text = re.sub(r"```(?:json)?", "", text).strip().rstrip("`").strip()
     return json.loads(text)
 
 
 class GeminiAiService:
     def generate_recipe(self, request: AiRecipeRequestDto, db: Session) -> RecipeCreateDto:
-        """
-        Call Gemini to generate a recipe and return it as a RecipeCreateDto.
-        Ingredient matching/creation is handled by the endpoint layer.
-        """
-        from app import crud  # local import to avoid circular deps
+        from app import crud
+        from app.schemas.ingredient import IngredientCreate
 
-        model = _get_model()
+        client = _get_client()
         prompt = _build_recipe_prompt(request)
 
         logger.info("Sending recipe generation prompt to Gemini...")
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+        )
         raw_text = response.text.strip()
         logger.debug("Gemini raw response: %s", raw_text)
 
         data = _parse_json_from_text(raw_text)
 
-        # ------------------------------------------------------------------
-        # Map ingredients: look up existing by name (case-insensitive),
-        # create if not found.
-        # ------------------------------------------------------------------
         ingredient_dtos: list[RecipeIngredientDto] = []
         for ing_data in data.get("ingredients", []):
             name: str = ing_data.get("name", "").strip()
@@ -140,13 +131,10 @@ class GeminiAiService:
             if not name:
                 continue
 
-            # Search existing ingredients
             matches = crud.ingredient.search_by_name(db, name=name)
             if matches:
                 ingredient = matches[0]
             else:
-                # Create a new ingredient with price 0 (can be updated later)
-                from app.schemas.ingredient import IngredientCreate
                 ingredient = crud.ingredient.create(
                     db, obj_in=IngredientCreate(name=name, price=0.0)
                 )
@@ -181,10 +169,6 @@ class GeminiAiService:
         allergies: list[str],
         dislikes: list[str],
     ) -> list[dict]:
-        """
-        Call Gemini to generate a 7-day meal plan.
-        Returns a list of dicts: [{day, mealType, recipeName}, ...]
-        """
         _MEAL_PLAN_JSON_SCHEMA = """{
           "meals": [
             {
@@ -194,7 +178,7 @@ class GeminiAiService:
             }
           ]
         }"""
-        
+
         constraints: list[str] = []
         if diet:
             constraints.append(f"- Dietary preference: {diet}")
@@ -218,14 +202,18 @@ OUTPUT RULES:
 
 {_MEAL_PLAN_JSON_SCHEMA}
 """
-        model = _get_model()
+        client = _get_client()
 
         logger.info("Sending meal plan generation prompt to Gemini...")
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+        )
         raw_text = response.text.strip()
         logger.debug("Gemini raw response: %s", raw_text)
 
         data = _parse_json_from_text(raw_text)
         return data.get("meals", [])
+
 
 gemini_service = GeminiAiService()
