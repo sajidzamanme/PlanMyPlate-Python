@@ -93,7 +93,7 @@ def generate_meal_plan(
     allergies = prefs.allergies if prefs and prefs.allergies else []
     dislikes = prefs.dislikes if prefs and prefs.dislikes else []
 
-    allergy_names = [a.allergy_name for a in allergies]
+    allergy_names = [a.name for a in allergies]
     dislike_names = [d.name for d in dislikes]
 
     try:
