@@ -26,6 +26,28 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(db_obj)
         return db_obj
 
+    def update(self, db: Session, *, db_obj: User, obj_in: UserUpdate) -> User:
+        update_data = obj_in.model_dump(exclude_unset=True)
+        if "firstName" in update_data:
+            db_obj.first_name = update_data["firstName"]
+        if "lastName" in update_data:
+            db_obj.last_name = update_data["lastName"]
+        if "phone" in update_data:
+            db_obj.phone = update_data["phone"]
+        if "dateOfBirth" in update_data:
+            db_obj.date_of_birth = update_data["dateOfBirth"]
+        if "age" in update_data:
+            db_obj.age = update_data["age"]
+        if "weight" in update_data:
+            db_obj.weight = update_data["weight"]
+        if "budget" in update_data:
+            db_obj.budget = update_data["budget"]
+            
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
     def authenticate(self, db: Session, *, identifier: str, password: str) -> Optional[User]:
         """Authenticate a user by email or phone number."""
         # Try email first

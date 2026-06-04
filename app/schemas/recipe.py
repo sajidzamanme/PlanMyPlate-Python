@@ -30,7 +30,7 @@ class RecipeIngredientResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 class RecipeResponse(BaseModel):
-    recipeId: int       = Field(alias="recipe_id")
+    recipeId: int       = Field(validation_alias="recipe_id")
     name: str
     description: Optional[str] = None
     calories: Optional[int] = None
@@ -38,10 +38,10 @@ class RecipeResponse(BaseModel):
     carbs: Optional[float] = None
     fat: Optional[float] = None
     fiber: Optional[float] = None
-    prepTime: Optional[int]  = Field(None, alias="prep_time")
-    cookTime: Optional[int]  = Field(None, alias="cook_time")
+    prepTime: Optional[int]  = Field(None, validation_alias="prep_time")
+    cookTime: Optional[int]  = Field(None, validation_alias="cook_time")
     instructions: Optional[str] = None
-    imageUrl: Optional[str]  = Field(None, alias="image_url")
-    recipeIngredients: List[RecipeIngredientResponse] = Field([], alias="recipe_ingredients")
+    imageUrl: Optional[str]  = Field(None, validation_alias="image_url")
+    recipeIngredients: List[RecipeIngredientResponse] = Field([], validation_alias="recipe_ingredients")
     
     model_config = {"from_attributes": True, "populate_by_name": True}

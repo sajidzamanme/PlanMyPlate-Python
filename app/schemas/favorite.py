@@ -10,10 +10,10 @@ class AddFavoriteRequest(BaseModel):
 
 class UserFavoriteResponse(BaseModel):
     id: int
-    userId: int = Field(alias="user_id")
-    recipeId: int = Field(alias="recipe_id")
+    userId: int = Field(validation_alias="user_id")
+    recipeId: int = Field(validation_alias="recipe_id")
     recipe: Optional[RecipeResponse] = None
-    createdAt: Optional[datetime] = Field(None, alias="created_at")
+    createdAt: Optional[datetime] = Field(None, validation_alias="created_at")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 
