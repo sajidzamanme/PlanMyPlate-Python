@@ -15,9 +15,9 @@ class GroceryListItemResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 class GroceryListResponse(BaseModel):
-    listId: int                     = Field(alias="list_id")
-    userId: int                     = Field(alias="user_id")
-    dateCreated: Optional[date]     = Field(None, alias="date_created")
+    listId: int                     = Field(validation_alias="list_id")
+    userId: int                     = Field(validation_alias="user_id")
+    dateCreated: Optional[date]     = Field(None, validation_alias="date_created")
     status: Optional[str]           = None
     items: List[GroceryListItemResponse] = []
     

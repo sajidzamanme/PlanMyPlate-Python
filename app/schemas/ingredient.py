@@ -3,8 +3,8 @@ from typing import Optional, List
 from decimal import Decimal
 
 class IngredientTag(BaseModel):
-    tagId: int = Field(alias="tag_id")
-    tagName: str = Field(alias="tag_name")
+    tagId: int = Field(validation_alias="tag_id")
+    tagName: str = Field(validation_alias="tag_name")
     
     model_config = {"from_attributes": True, "populate_by_name": True}
 
@@ -20,7 +20,7 @@ class IngredientUpdate(BaseModel):
     price: Optional[Decimal] = None
 
 class Ingredient(IngredientBase):
-    ingId: int = Field(alias="ing_id")
+    ingId: int = Field(validation_alias="ing_id")
     tags: List[IngredientTag] = []
     
     model_config = {"from_attributes": True, "populate_by_name": True}

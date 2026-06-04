@@ -10,13 +10,13 @@ class RateRecipeRequest(BaseModel):
 
 
 class RecipeRatingResponse(BaseModel):
-    ratingId: int = Field(alias="rating_id")
-    userId: int = Field(alias="user_id")
-    recipeId: int = Field(alias="recipe_id")
+    ratingId: int = Field(validation_alias="rating_id")
+    userId: int = Field(validation_alias="user_id")
+    recipeId: int = Field(validation_alias="recipe_id")
     rating: int
     review: Optional[str] = None
-    createdAt: Optional[datetime] = Field(None, alias="created_at")
-    updatedAt: Optional[datetime] = Field(None, alias="updated_at")
+    createdAt: Optional[datetime] = Field(None, validation_alias="created_at")
+    updatedAt: Optional[datetime] = Field(None, validation_alias="updated_at")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

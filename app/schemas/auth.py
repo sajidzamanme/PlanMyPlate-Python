@@ -9,7 +9,7 @@ class SignUpRequest(BaseModel):
     email: EmailStr
     password: str
     phone: str
-    dateOfBirth: date = Field(..., alias="dateOfBirth")
+    dateOfBirth: date = Field(..., validation_alias="dateOfBirth")
 
     model_config = {"populate_by_name": True}
 

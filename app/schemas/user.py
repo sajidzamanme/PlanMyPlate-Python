@@ -4,11 +4,11 @@ from decimal import Decimal
 from datetime import date
 
 class UserBase(BaseModel):
-    firstName: str = Field(alias="first_name")
-    lastName: str = Field(alias="last_name")
+    firstName: str = Field(validation_alias="first_name")
+    lastName: str = Field(validation_alias="last_name")
     email: EmailStr
     phone: Optional[str] = None
-    dateOfBirth: Optional[date] = Field(None, alias="date_of_birth")
+    dateOfBirth: Optional[date] = Field(None, validation_alias="date_of_birth")
     
     model_config = {"populate_by_name": True}
 
@@ -29,10 +29,10 @@ class UserCreate(UserBase):
         return v
 
 class UserUpdate(BaseModel):
-    firstName: Optional[str] = Field(None, alias="first_name")
-    lastName: Optional[str] = Field(None, alias="last_name")
+    firstName: Optional[str] = Field(None, validation_alias="first_name")
+    lastName: Optional[str] = Field(None, validation_alias="last_name")
     phone: Optional[str] = None
-    dateOfBirth: Optional[date] = Field(None, alias="date_of_birth")
+    dateOfBirth: Optional[date] = Field(None, validation_alias="date_of_birth")
     age: Optional[int] = None
     weight: Optional[Decimal] = None
     budget: Optional[Decimal] = None
@@ -40,13 +40,13 @@ class UserUpdate(BaseModel):
     model_config = {"populate_by_name": True}
 
 class UserDto(UserBase):
-    userId: int = Field(alias="user_id")
+    userId: int = Field(validation_alias="user_id")
     
     model_config = {"from_attributes": True, "populate_by_name": True}
 
 class UserPreferencesDto(BaseModel):
-    prefId: Optional[int] = Field(None, alias="pref_id")
-    userId: int = Field(alias="user_id")
+    prefId: Optional[int] = Field(None, validation_alias="pref_id")
+    userId: int = Field(validation_alias="user_id")
     diet: Optional[str] = None
     allergies: List[str] = []
     dislikes: List[str] = []

@@ -12,8 +12,8 @@ class ExpiryEntryRequest(BaseModel):
     If the product name matches an existing ingredient it is reused;
     otherwise a new ingredient row is created automatically.
     """
-    productName: str = Field(..., min_length=1, max_length=150, alias="product_name")
-    expiryDate: date = Field(..., alias="expiry_date")
+    productName: str = Field(..., min_length=1, max_length=150, validation_alias="product_name")
+    expiryDate: date = Field(..., validation_alias="expiry_date")
     quantity: float = Field(default=1.0, gt=0)
     unit: str = Field(default="unit", max_length=50)
 
@@ -22,7 +22,7 @@ class ExpiryEntryRequest(BaseModel):
 
 class ExpiryItemUpdateRequest(BaseModel):
     """Body for PUT /expiry/items/{item_id} — all fields optional (partial update)."""
-    expiryDate: Optional[date] = Field(None, alias="expiry_date")
+    expiryDate: Optional[date] = Field(None, validation_alias="expiry_date")
     quantity: Optional[float] = Field(None, gt=0)
     unit: Optional[str] = Field(None, max_length=50)
 
@@ -36,10 +36,10 @@ class ExpiryItemResponse(BaseModel):
     A single inventory item enriched with computed expiry-related fields.
     Uses the existing InvItem model; adds daysUntilExpiry and isExpired.
     """
-    itemId: int             = Field(alias="item_id")
-    productName: str        = Field(alias="product_name")   # ingredient name
-    expiryDate: Optional[date] = Field(None, alias="expiry_date")
-    dateAdded: Optional[date]  = Field(None, alias="date_added")
+    itemId: int             = Field(validation_alias="item_id")
+    productName: str        = Field(validation_alias="product_name")   # ingredient name
+    expiryDate: Optional[date] = Field(None, validation_alias="expiry_date")
+    dateAdded: Optional[date]  = Field(None, validation_alias="date_added")
     quantity: Optional[float]  = None
     unit: Optional[str]        = None
     daysUntilExpiry: Optional[int] = None  # computed: None when no expiry_date
