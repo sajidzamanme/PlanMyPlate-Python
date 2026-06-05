@@ -4,11 +4,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
+from pydantic import ValidationError
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.db.session import engine
 from app.db.base_class import Base
 import os
+import re
 
 # Create tables
 # In a real project, use Alembic for migrations.
@@ -82,11 +84,55 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
         content={"error": "DatabaseError", "message": "A database error occurred."}
     )
 
+def clean_validation_error_message(exc) -> str:
+    """Extract and format a single clean, UI-ready message from a validation exception."""
+    try:
+        errors = exc.errors()
+        if not errors:
+            return "Validation error"
+            
+        first_error = errors[0]
+        loc = first_error.get("loc", [])
+        msg = first_error.get("msg", "Validation error")
+        type_ = first_error.get("type", "")
+        
+        # Clean up Pydantic V2 "Value error, " or "Assertion failed, " prefixes
+        if msg.startswith("Value error, "):
+            msg = msg[13:]
+        elif msg.startswith("Assertion failed, "):
+            msg = msg[18:]
+            
+        # Check for missing field error
+        if type_ == "missing" or "missing" in type_:
+            field_name = "Field"
+            if len(loc) > 1:
+                field_name = str(loc[-1])
+            # Format camelCase/snake_case field name to a user-friendly version
+            readable_field = re.sub(r'(?<!^)(?=[A-Z])', ' ', field_name).replace('_', ' ').title()
+            return f"{readable_field} is required."
+            
+        if msg:
+            # Capitalise first letter
+            msg = msg[0].upper() + msg[1:]
+            return msg
+    except Exception:
+        pass
+    return "Validation error"
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    message = clean_validation_error_message(exc)
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"error": "ValidationError", "message": str(exc)}
+        content={"error": "ValidationError", "message": message}
+    )
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    message = clean_validation_error_message(exc)
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"error": "ValidationError", "message": message}
     )
 
 @app.get("/")

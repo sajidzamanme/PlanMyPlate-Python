@@ -65,6 +65,18 @@ class TestSignUpRequest:
         with pytest.raises(ValidationError, match="Password must be at least 8 characters"):
             SignUpRequest(**self._valid_payload(password="Short1"))
 
+    def test_password_no_uppercase_rejected(self):
+        with pytest.raises(ValidationError, match="uppercase"):
+            SignUpRequest(**self._valid_payload(password="nouppercase1"))
+
+    def test_password_no_lowercase_rejected(self):
+        with pytest.raises(ValidationError, match="lowercase"):
+            SignUpRequest(**self._valid_payload(password="NOLOWERCASE1"))
+
+    def test_password_no_digit_rejected(self):
+        with pytest.raises(ValidationError, match="number"):
+            SignUpRequest(**self._valid_payload(password="NoDigitsHere"))
+
 
 # =========================================================================
 # UserCreate (stricter password rules than SignUpRequest)

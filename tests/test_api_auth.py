@@ -52,6 +52,16 @@ class TestSignUp:
         assert resp.status_code == 400
         assert "phone" in resp.json()["detail"].lower()
 
+    def test_signup_password_no_letters_fails_validation(self, client):
+        resp = client.post(
+            "/api/auth/signup",
+            json=self._signup_payload(password="12345678"),
+        )
+        assert resp.status_code == 422
+        data = resp.json()
+        assert data["error"] == "ValidationError"
+        assert "letter" in data["message"].lower() or "uppercase" in data["message"].lower() or "lowercase" in data["message"].lower()
+
 
 class TestSignIn:
     """POST /api/auth/signin"""
