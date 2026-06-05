@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Table, TIMESTAMP, Date, func
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Table, TIMESTAMP, Date, func, Boolean
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -15,6 +15,13 @@ user_prefs_dislikes = Table(
     Base.metadata,
     Column("pref_id", Integer, ForeignKey("user_preferences.pref_id"), primary_key=True),
     Column("ing_id", Integer, ForeignKey("ingredients.ing_id"), primary_key=True)
+)
+
+user_prefs_diets = Table(
+    "user_preferences_diets",
+    Base.metadata,
+    Column("pref_id", Integer, ForeignKey("user_preferences.pref_id"), primary_key=True),
+    Column("diet_id", Integer, ForeignKey("diets.diet_id"), primary_key=True)
 )
 
 class User(Base):
@@ -34,6 +41,7 @@ class User(Base):
     
     reset_token = Column(String(100), nullable=True)
     reset_token_expiry = Column(TIMESTAMP, nullable=True)
+    is_deleted = Column(Boolean, nullable=False, default=False)
     
     # Relationships
     preferences = relationship("UserPreferences", uselist=False, back_populates="user", cascade="all, delete-orphan")
@@ -43,13 +51,13 @@ class UserPreferences(Base):
     
     pref_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), unique=True, nullable=False)
-    diet_id = Column(Integer, ForeignKey("diets.diet_id"))
     budget = Column(Numeric(10, 2))
     height = Column(Numeric(5, 2))  # in cm
     weight = Column(Numeric(5, 2))  # in kg
     gender = Column(String(10))     # male, female, other
     
     user = relationship("User", back_populates="preferences")
-    diet = relationship("Diet")
+    diets = relationship("Diet", secondary=user_prefs_diets, backref="preferences")
     allergies = relationship("Ingredient", secondary=user_prefs_allergies, backref="preferences_that_avoid")
     dislikes = relationship("Ingredient", secondary=user_prefs_dislikes, backref="preferences_who_dislike")
+

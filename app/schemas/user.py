@@ -41,13 +41,14 @@ class UserUpdate(BaseModel):
 
 class UserDto(UserBase):
     userId: int = Field(validation_alias="user_id")
+    isDeleted: bool = Field(False, validation_alias="is_deleted")
     
     model_config = {"from_attributes": True, "populate_by_name": True}
 
 class UserPreferencesDto(BaseModel):
     prefId: Optional[int] = Field(None, validation_alias="pref_id")
     userId: int = Field(validation_alias="user_id")
-    diet: Optional[str] = None
+    diets: List[str] = []
     allergies: List[str] = []
     dislikes: List[str] = []
     budget: Optional[Decimal] = None

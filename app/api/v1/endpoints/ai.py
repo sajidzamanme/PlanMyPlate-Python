@@ -97,7 +97,7 @@ def generate_meal_plan(
     weight = prefs.weight if prefs else None
     gender = prefs.gender if prefs else None
     budget = prefs.budget if prefs else None
-    diet = prefs.diet.diet_name if prefs and prefs.diet else None
+    diets = [d.diet_name for d in prefs.diets] if prefs and prefs.diets else []
     allergies = [a.name for a in prefs.allergies] if prefs and prefs.allergies else []
     dislikes = [d.name for d in prefs.dislikes] if prefs and prefs.dislikes else []
     
@@ -112,7 +112,8 @@ def generate_meal_plan(
         "bmi": bmi,
         "bmi_category": bmi_category,
         "budget": float(budget) if budget else None,
-        "diet": diet,
+        "diet": ", ".join(diets) if diets else None,
+        "diets": diets,
         "allergies": allergies,
         "dislikes": dislikes
     }

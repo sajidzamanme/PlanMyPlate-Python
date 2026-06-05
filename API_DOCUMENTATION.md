@@ -95,7 +95,7 @@ Initiate password reset process.
 - **Response Body:**
   ```json
   {
-    "message": "Password reset token sent to email. Token: 1234"
+    "message": "Password reset token sent to email. Token: 0000"
   }
   ```
 
@@ -107,7 +107,7 @@ Complete password reset.
 - **Request Body:**
   ```json
   {
-    "resetToken": "1234",
+    "resetToken": "0000",
     "newPassword": "newSecurePassword456"
   }
   ```
@@ -199,7 +199,7 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
   {
     "prefId": 10,
     "userId": 1,
-    "diet": "Vegan",
+    "diets": ["Vegan"],
     "allergies": ["Peanuts", "Shellfish"],
     "dislikes": ["Mushrooms"],
     "budget": 150.00,
@@ -221,7 +221,7 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
   ```json
   {
     "userId": 1,
-    "diet": "Vegan",
+    "diets": ["Vegan"],
     "allergies": ["Peanuts"],
     "dislikes": [],
     "budget": 200.00,

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.user import User
@@ -6,11 +6,27 @@ from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
+    def get(self, db: Session, id: Any) -> Optional[User]:
+        user = db.get(self.model, id)
+        if user and user.is_deleted:
+            return None
+        return user
+
+    def remove(self, db: Session, *, id: int) -> Optional[User]:
+        user = db.get(self.model, id)
+        if user:
+            user.is_deleted = True
+            user.email = f"{user.email}_deleted_{user.user_id}"
+            user.phone = f"{user.phone}_deleted_{user.user_id}"
+            db.add(user)
+            db.commit()
+        return user
+
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
-        return db.query(User).filter(User.email == email).first()
+        return db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
     def get_by_phone(self, db: Session, *, phone: str) -> Optional[User]:
-        return db.query(User).filter(User.phone == phone).first()
+        return db.query(User).filter(User.phone == phone, User.is_deleted == False).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
         db_obj = User(

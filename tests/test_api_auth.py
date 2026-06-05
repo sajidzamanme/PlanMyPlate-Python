@@ -98,3 +98,28 @@ class TestForgotPassword:
             json={"email": "unknown@example.com"},
         )
         assert resp.status_code == 404
+
+    def test_reset_password_success(self, client, db_session, test_user):
+        # 1. Request password reset
+        resp = client.post(
+            "/api/auth/forgot-password",
+            json={"email": test_user.email},
+        )
+        assert resp.status_code == 200
+        assert "0000" in resp.json()["message"]
+        
+        # 2. Reset password using "0000"
+        reset_resp = client.post(
+            "/api/auth/reset-password",
+            json={"resetToken": "0000", "newPassword": "NewSecurePassword123"}
+        )
+        assert reset_resp.status_code == 200
+        assert reset_resp.json()["message"] == "Password reset successfully"
+        
+        # 3. Try signing in with new password
+        signin_resp = client.post(
+            "/api/auth/signin",
+            json={"email": test_user.email, "password": "NewSecurePassword123"}
+        )
+        assert signin_resp.status_code == 200
+

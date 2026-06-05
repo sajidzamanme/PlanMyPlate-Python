@@ -49,10 +49,15 @@ class CRUDFavorite:
         limit: int = 100,
     ) -> List[UserFavorite]:
         """List user's favorite recipes with full recipe data."""
+        from app.models.recipe import Recipe
         return (
             db.query(UserFavorite)
+            .join(Recipe)
             .options(joinedload(UserFavorite.recipe))
-            .filter(UserFavorite.user_id == user_id)
+            .filter(
+                UserFavorite.user_id == user_id,
+                Recipe.is_deleted == False
+            )
             .order_by(UserFavorite.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -63,11 +68,14 @@ class CRUDFavorite:
         self, db: Session, *, user_id: int, recipe_id: int
     ) -> bool:
         """Check whether a recipe is in the user's favorites."""
+        from app.models.recipe import Recipe
         return (
             db.query(UserFavorite)
+            .join(Recipe)
             .filter(
                 UserFavorite.user_id == user_id,
                 UserFavorite.recipe_id == recipe_id,
+                Recipe.is_deleted == False
             )
             .first()
             is not None

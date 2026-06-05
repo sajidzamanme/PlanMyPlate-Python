@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 from app.crud.base import CRUDBase
@@ -8,6 +8,23 @@ from app.schemas.recipe import RecipeCreateDto, RecipeIngredientDto
 from app import crud
 
 class CRUDRecipe(CRUDBase[Recipe, RecipeCreateDto, RecipeCreateDto]):
+    def get(self, db: Session, id: Any) -> Optional[Recipe]:
+        recipe = db.get(self.model, id)
+        if recipe and recipe.is_deleted:
+            return None
+        return recipe
+
+    def get_multi(self, db: Session, skip: int = 0, limit: int = 100) -> List[Recipe]:
+        return db.query(self.model).filter(self.model.is_deleted == False).offset(skip).limit(limit).all()
+
+    def remove(self, db: Session, *, id: int) -> Optional[Recipe]:
+        recipe = db.get(self.model, id)
+        if recipe:
+            recipe.is_deleted = True
+            db.add(recipe)
+            db.commit()
+        return recipe
+
     def create_recipe(self, db: Session, *, obj_in: RecipeCreateDto) -> Recipe:
         # Create Recipe
         db_obj = Recipe(
@@ -93,9 +110,9 @@ class CRUDRecipe(CRUDBase[Recipe, RecipeCreateDto, RecipeCreateDto]):
         return db_obj
 
     def search_by_name(self, db: Session, name: str) -> List[Recipe]:
-        return db.query(Recipe).filter(Recipe.name.ilike(f"%{name}%")).all()
+        return db.query(Recipe).filter(Recipe.name.ilike(f"%{name}%"), Recipe.is_deleted == False).all()
 
     def filter_by_calories(self, db: Session, min_cals: int, max_cals: int) -> List[Recipe]:
-        return db.query(Recipe).filter(Recipe.calories >= min_cals, Recipe.calories <= max_cals).all()
+        return db.query(Recipe).filter(Recipe.calories >= min_cals, Recipe.calories <= max_cals, Recipe.is_deleted == False).all()
 
 recipe = CRUDRecipe(Recipe)
