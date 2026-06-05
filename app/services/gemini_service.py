@@ -20,7 +20,7 @@ from app.schemas.recipe import RecipeCreateDto, RecipeIngredientDto
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.5-flash"
 
 
 # ---------------------------------------------------------------------------
@@ -163,44 +163,71 @@ class GeminiAiService:
         )
         return recipe_dto
 
-    def generate_meal_plan_recipe_names(
+    def generate_meal_plan_recipes(
         self,
-        diet: Optional[str],
-        allergies: list[str],
-        dislikes: list[str],
+        user_prefs: dict,
+        existing_recipes: list[dict],
     ) -> list[dict]:
         _MEAL_PLAN_JSON_SCHEMA = """{
           "meals": [
             {
               "day": <integer 1-7>,
               "mealType": "<Breakfast | Lunch | Dinner>",
-              "recipeName": "<name of the recipe>"
+              "recipeId": <integer ID of selected recipe, or null if a new recipe is generated>,
+              "recipeName": "<name of the selected or newly created recipe>",
+              "newRecipe": <null if recipeId is specified, or a full recipe JSON object matching the RECIPE schema if recipeId is null>
             }
           ]
         }"""
 
-        constraints: list[str] = []
-        if diet:
-            constraints.append(f"- Dietary preference: {diet}")
-        if allergies:
-            constraints.append(f"- Avoid allergens: {', '.join(allergies)}")
-        if dislikes:
-            constraints.append(f"- Disliked ingredients (avoid): {', '.join(dislikes)}")
-        constraint_block = "\n".join(constraints) if constraints else "  (no specific constraints)"
+        _RECIPE_JSON_SCHEMA = """{
+          "name": "<recipe name (string)>",
+          "description": "<short description (string)>",
+          "calories": <integer — total calories per serving>,
+          "protein": <float — grams of protein per serving>,
+          "carbs": <float — grams of carbohydrates per serving>,
+          "fat": <float — grams of fat per serving>,
+          "fiber": <float — grams of dietary fiber per serving>,
+          "prepTime": <integer — preparation time in minutes>,
+          "cookTime": <integer — cooking time in minutes>,
+          "instructions": "<full step-by-step cooking instructions (string)>",
+          "ingredients": [
+            {
+              "name": "<ingredient name>",
+              "quantity": <numeric amount>,
+              "unit": "<unit of measurement, e.g. g, ml, cup, tbsp>"
+            }
+          ]
+        }"""
 
-        prompt = f"""You are a professional nutritionist. Create a balanced 7-day meal plan (Breakfast, Lunch, Dinner for each day = 21 meals total).
+        prefs_str = json.dumps(user_prefs, indent=2)
+        recipes_str = json.dumps(existing_recipes, indent=2)
 
-CONSTRAINTS:
-{constraint_block}
+        prompt = f"""You are a professional nutritionist and chef. Create a balanced 7-day meal plan (Breakfast, Lunch, Dinner for each day = 21 meals total) for a user with the following profile:
+
+USER PROFILE:
+{prefs_str}
+
+We have a database of existing recipes:
+EXISTING RECIPES:
+{recipes_str}
+
+YOUR TASK:
+For each of the 21 meal slots (7 days × 3 meals: Breakfast, Lunch, Dinner), you must:
+1. Try to select an existing recipe from the database that matches the user's dietary preferences, restrictions, and nutritional target. If you select an existing recipe, set "recipeId" to its ID and set "newRecipe" to null.
+2. If none of the existing recipes match the requirements or you want to provide variety, you must design a NEW recipe specifically tailored to the user's constraints. If you design a new recipe, set "recipeId" to null, and provide the complete recipe details in the "newRecipe" field (including ingredients, cooking steps, and macronutrients).
 
 OUTPUT RULES:
 1. Return ONLY a single valid JSON object — no markdown fences, no extra text.
 2. The meals array must have exactly 21 entries (7 days × 3 meal types).
-3. Each entry must have: day (1-7), mealType (Breakfast/Lunch/Dinner), recipeName.
+3. Each entry must have: day (1-7), mealType (Breakfast/Lunch/Dinner), recipeId, recipeName, newRecipe.
 4. Vary the meals — do not repeat the same recipe on the same day.
 5. The JSON must exactly match this schema:
 
 {_MEAL_PLAN_JSON_SCHEMA}
+
+Where the "newRecipe" field schema is:
+{_RECIPE_JSON_SCHEMA}
 """
         client = _get_client()
 

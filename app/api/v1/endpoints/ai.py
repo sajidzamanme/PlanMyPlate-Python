@@ -89,18 +89,65 @@ def generate_meal_plan(
 
     # Fetch user preferences for personalised prompt
     prefs = crud.user_preferences.get_by_user_id(db, user_id=userId)
+    
+    # Calculate age and BMI
+    from app.api.v1.endpoints.user_preferences import _calculate_bmi, _get_bmi_category, _calculate_age
+    age = _calculate_age(current_user.date_of_birth) or current_user.age
+    
+    height = prefs.height if prefs else None
+    weight = prefs.weight if prefs else None
+    gender = prefs.gender if prefs else None
+    budget = prefs.budget if prefs else None
     diet = prefs.diet.diet_name if prefs and prefs.diet else None
-    allergies = prefs.allergies if prefs and prefs.allergies else []
-    dislikes = prefs.dislikes if prefs and prefs.dislikes else []
+    allergies = [a.name for a in prefs.allergies] if prefs and prefs.allergies else []
+    dislikes = [d.name for d in prefs.dislikes] if prefs and prefs.dislikes else []
+    
+    bmi = _calculate_bmi(height, weight)
+    bmi_category = _get_bmi_category(bmi, age)
+    
+    user_prefs_data = {
+        "age": age,
+        "gender": gender,
+        "height": float(height) if height else None,
+        "weight": float(weight) if weight else None,
+        "bmi": bmi,
+        "bmi_category": bmi_category,
+        "budget": float(budget) if budget else None,
+        "diet": diet,
+        "allergies": allergies,
+        "dislikes": dislikes
+    }
 
-    allergy_names = [a.name for a in allergies]
-    dislike_names = [d.name for d in dislikes]
+    # Fetch existing recipes
+    from app.models.recipe import Recipe
+    db_recipes = db.query(Recipe).all()
+    recipes_data = []
+    for r in db_recipes:
+        ingredients = []
+        for ri in r.recipe_ingredients:
+            ingredients.append({
+                "name": ri.ingredient.name,
+                "quantity": ri.quantity,
+                "unit": ri.unit
+            })
+        recipes_data.append({
+            "recipeId": r.recipe_id,
+            "name": r.name,
+            "description": r.description,
+            "calories": r.calories,
+            "protein": r.protein,
+            "carbs": r.carbs,
+            "fat": r.fat,
+            "fiber": r.fiber,
+            "prepTime": r.prep_time,
+            "cookTime": r.cook_time,
+            "ingredients": ingredients
+        })
 
     try:
-        meals = gemini_service.generate_meal_plan_recipe_names(
-            diet=diet,
-            allergies=allergy_names,
-            dislikes=dislike_names,
+        meals = gemini_service.generate_meal_plan_recipes(
+            user_prefs=user_prefs_data,
+            existing_recipes=recipes_data,
         )
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
@@ -110,20 +157,86 @@ def generate_meal_plan(
             detail=f"AI meal plan generation failed: {str(exc)}",
         )
 
-    # Map meal slots to recipe IDs (best-effort name match)
-    recipe_ids: list[int] = []
-    for meal in meals:
-        recipe_name: str = meal.get("recipeName", "")
-        matches = crud.recipe.search_by_name(db, name=recipe_name)
-        recipe_ids.append(matches[0].recipe_id if matches else None)  # type: ignore[arg-type]
+    # Sort the meals by day and mealType to ensure correct slot ordering
+    meal_type_order = {"Breakfast": 0, "Lunch": 1, "Dinner": 2}
+    sorted_meals = sorted(
+        meals,
+        key=lambda m: (int(m.get("day", 1)), meal_type_order.get(m.get("mealType", "Breakfast"), 0))
+    )
 
-    # Filter out None values for the create call (use only found recipes)
-    valid_recipe_ids = [rid for rid in recipe_ids if rid is not None]
+    # Map meal slots to recipe IDs (validate or create)
+    from app.schemas.recipe import RecipeCreateDto, RecipeIngredientDto
+    from app.schemas.ingredient import IngredientCreate
+
+    recipe_ids: list[int] = []
+    for meal in sorted_meals:
+        recipe_id = meal.get("recipeId")
+        recipe_name = meal.get("recipeName", "")
+        new_recipe_details = meal.get("newRecipe")
+
+        db_recipe = None
+        if recipe_id is not None:
+            db_recipe = crud.recipe.get(db, id=recipe_id)
+
+        # Fallback to search by name if ID was not found/invalid
+        if not db_recipe and recipe_name:
+            matches = crud.recipe.search_by_name(db, name=recipe_name)
+            if matches:
+                db_recipe = matches[0]
+
+        # If still not found, we create a new recipe
+        if not db_recipe:
+            if new_recipe_details and isinstance(new_recipe_details, dict):
+                recipe_data = new_recipe_details
+            else:
+                recipe_data = {"name": recipe_name or "AI Generated Recipe"}
+
+            ingredient_dtos = []
+            for ing_data in recipe_data.get("ingredients", []):
+                ing_name = ing_data.get("name", "").strip()
+                quantity = ing_data.get("quantity", 1)
+                unit = ing_data.get("unit", "unit")
+                if not ing_name:
+                    continue
+
+                matches = crud.ingredient.search_by_name(db, name=ing_name)
+                if matches:
+                    ingredient = matches[0]
+                else:
+                    ingredient = crud.ingredient.create(
+                        db, obj_in=IngredientCreate(name=ing_name, price=0.0)
+                    )
+
+                ingredient_dtos.append(
+                    RecipeIngredientDto(
+                        ingId=ingredient.ing_id,
+                        quantity=float(quantity),
+                        unit=str(unit),
+                    )
+                )
+
+            recipe_dto = RecipeCreateDto(
+                name=recipe_data.get("name", recipe_name or "AI Generated Recipe"),
+                description=recipe_data.get("description"),
+                calories=recipe_data.get("calories"),
+                protein=recipe_data.get("protein"),
+                carbs=recipe_data.get("carbs"),
+                fat=recipe_data.get("fat"),
+                fiber=recipe_data.get("fiber"),
+                prepTime=recipe_data.get("prepTime") or recipe_data.get("prep_time"),
+                cookTime=recipe_data.get("cookTime") or recipe_data.get("cook_time"),
+                instructions=recipe_data.get("instructions"),
+                imageUrl=None,
+                ingredients=ingredient_dtos,
+            )
+            db_recipe = crud.recipe.create_recipe(db, obj_in=recipe_dto)
+
+        recipe_ids.append(db_recipe.recipe_id)
 
     # Use existing CRUD to create the meal plan with recipe slots
     from app.schemas.meal_plan import MealPlanRequestDto
     dto = MealPlanRequestDto(
-        recipeIds=valid_recipe_ids,
+        recipeIds=recipe_ids,
         duration=7,
         startDate=str(plan_start),
     )
@@ -133,12 +246,12 @@ def generate_meal_plan(
     from app.schemas.ingredient import IngredientQuantityDto
 
     recipe_counts: dict[int, int] = {}
-    for rid in valid_recipe_ids:
+    for rid in recipe_ids:
         recipe_counts[rid] = recipe_counts.get(rid, 0) + 1
 
     ingredient_dtos = []
     processed: set[int] = set()
-    for rid in valid_recipe_ids:
+    for rid in recipe_ids:
         if rid in processed:
             continue
         processed.add(rid)
