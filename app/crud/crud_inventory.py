@@ -46,11 +46,12 @@ class CRUDInventory(CRUDBase[Inventory, BaseModel, BaseModel]):
         if not inventory:
             inventory = self.create_for_user(db, user_id=user_id)
         
-        # Check existing item
+        # Check existing item case-insensitively
+        from sqlalchemy import func
         existing_item = db.query(InvItem).filter(
             InvItem.inv_id == inventory.inv_id,
             InvItem.ing_id == ingredient.ing_id,
-            InvItem.unit == unit # simplistic check, case insensitive in Java but let's stick to simple here
+            func.lower(InvItem.unit) == unit.strip().lower()
         ).first()
         
         if existing_item:

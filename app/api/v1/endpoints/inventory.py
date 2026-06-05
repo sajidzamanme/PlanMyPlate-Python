@@ -20,12 +20,7 @@ def get_user_inventory(
     
     inventory = crud.inventory.get_by_user_id(db, user_id=user_id)
     if not inventory:
-        # Auto-create if not exists, similar to Java implicit creation logic?
-        # Java `createForUser` endpoint exists.
-        # But `getByUserId` returns 404 if not found in Java service.
-        # But `Purchase` creates it.
-        # Let's return 404 to be consistent with API docs "Note: If the user doesn't have an inventory yet, this will return a 404".
-        raise HTTPException(status_code=404, detail="Inventory not found")
+        inventory = crud.inventory.create_for_user(db, user_id=user_id)
     return inventory
 
 @router.get("/{inventory_id}/items", response_model=List[InvItemResponse])
