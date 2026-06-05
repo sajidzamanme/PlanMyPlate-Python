@@ -42,23 +42,35 @@ class CRUDGroceryList(CRUDBase[GroceryList, GroceryListCreate, BaseModel]):
             db.commit()
             db.refresh(grocery_list)
         
+        # Aggregate input data by (ing_id, unit_lower) in Python first
+        aggregated = {}
+        unit_map = {}
+        
         for data in ingredient_data:
-            # Check existing
+            ing_id = data.ingredient.ingId
+            unit_lower = (data.unit or "unit").strip().lower()
+            aggregated[(ing_id, unit_lower)] = aggregated.get((ing_id, unit_lower), 0.0) + (data.quantity or 0.0)
+            if (ing_id, unit_lower) not in unit_map:
+                unit_map[(ing_id, unit_lower)] = data.unit or "unit"
+                
+        # Now process each aggregated ingredient case-insensitively
+        from sqlalchemy import func
+        for (ing_id, unit_lower), qty in aggregated.items():
             existing_item = db.query(GroceryListIngredient).filter(
                 GroceryListIngredient.list_id == grocery_list.list_id,
-                GroceryListIngredient.ing_id == data.ingredient.ingId,
-                GroceryListIngredient.unit == data.unit
+                GroceryListIngredient.ing_id == ing_id,
+                func.lower(GroceryListIngredient.unit) == unit_lower
             ).first()
             
             if existing_item:
-                existing_item.quantity += data.quantity
+                existing_item.quantity += qty
                 db.add(existing_item)
             else:
                 new_item = GroceryListIngredient(
                     list_id=grocery_list.list_id,
-                    ing_id=data.ingredient.ingId,
-                    quantity=data.quantity,
-                    unit=data.unit
+                    ing_id=ing_id,
+                    quantity=qty,
+                    unit=unit_map[(ing_id, unit_lower)]
                 )
                 db.add(new_item)
         

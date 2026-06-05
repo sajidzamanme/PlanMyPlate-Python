@@ -1,5 +1,6 @@
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app import crud
 from app.api import deps
@@ -122,3 +123,40 @@ def get_weekly_meal_plans(
     if user_id != current_user.user_id:
         raise HTTPException(status_code=400, detail="Not enough permissions")
     return crud.meal_plan.get_weekly_plans(db, user_id=user_id)
+
+@router.post("/slots/{slot_id}/cook")
+def cook_meal_slot(
+    *,
+    db: Session = Depends(deps.get_db),
+    slot_id: int,
+    force: bool = False,
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    from app.models.meal_plan import MealSlot
+    slot = db.query(MealSlot).filter(MealSlot.id == slot_id).first()
+    if not slot:
+        raise HTTPException(status_code=404, detail="Meal slot not found")
+        
+    if slot.meal_plan.user_id != current_user.user_id:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+        
+    servings = float(slot.servings_multiplier)
+    
+    if not force:
+        missing = crud.inventory.check_recipe_ingredients(db, user_id=current_user.user_id, recipe_id=slot.recipe_id, servings=servings)
+        if missing:
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "status": "insufficient_ingredients",
+                    "title": "Missing Pantry Items",
+                    "message": "missing inventory item",
+                    "missing": missing
+                }
+            )
+            
+    success = crud.inventory.deduct_recipe_ingredients(db, user_id=current_user.user_id, recipe_id=slot.recipe_id, servings=servings)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to cook recipe from slot")
+    return {"message": "Meal slot cooked and ingredients deducted from inventory"}
+

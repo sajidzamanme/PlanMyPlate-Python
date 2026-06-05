@@ -338,9 +338,41 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
   {
     "message": "Recipe deleted successfully"
   }
+
+### Cook Recipe
+- **URL:** `/api/recipes/{id}/cook`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  - `servings` (optional, float): Number of servings to cook (default: `1.0`).
+  - `force` (optional, boolean): Set to `true` to bypass inventory pre-flight validation and cook anyway (default: `false`).
+- **Response Body (200 OK):**
+  ```json
+  {
+    "message": "Recipe cooked and ingredients deducted from inventory"
+  }
+  ```
+- **Error Response (409 Conflict):**
+  Returned if ingredients are missing/insufficient and `force` is `false`.
+  ```json
+  {
+    "status": "insufficient_ingredients",
+    "title": "Missing Pantry Items",
+    "message": "missing inventory item",
+    "missing": [
+      {
+        "ingId": 12,
+        "name": "Chicken",
+        "required": 500.0,
+        "available": 200.0,
+        "unit": "g"
+      }
+    ]
+  }
   ```
 
 ---
+
 
 ## 5. Ingredients
 
@@ -451,7 +483,23 @@ Generate a meal plan with selected recipes. Also creates a grocery list with agg
 - **URL:** `/api/meal-plans/{id}`
 - **Method:** `DELETE`
 
+### Cook Meal Slot
+- **URL:** `/api/meal-plans/slots/{slot_id}/cook`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  - `force` (optional, boolean): Set to `true` to bypass inventory pre-flight validation and cook anyway (default: `false`).
+- **Response Body (200 OK):**
+  ```json
+  {
+    "message": "Meal slot cooked and ingredients deducted from inventory"
+  }
+  ```
+- **Error Response (409 Conflict):**
+  Same validation schema as Cook Recipe.
+
 ---
+
 
 ## 7. Grocery Lists
 All grocery list endpoints require authentication.
@@ -610,7 +658,25 @@ All inventory endpoints require authentication.
 - **Method:** `DELETE`
 - **Response Body:** `{"message": "Item removed successfully"}`
 
+### Cook Recipe (via Inventory)
+- **URL:** `/api/inventory/cook`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  - `recipeId` (required, integer): The ID of the recipe to cook.
+  - `servings` (optional, float): Number of servings to cook (default: `1.0`).
+  - `force` (optional, boolean): Set to `true` to bypass inventory pre-flight validation and cook anyway (default: `false`).
+- **Response Body (200 OK):**
+  ```json
+  {
+    "message": "Recipe cooked and ingredients deducted from inventory"
+  }
+  ```
+- **Error Response (409 Conflict):**
+  Same validation schema as Cook Recipe.
+
 ---
+
 
 ## 9. Reference Data
 

@@ -63,21 +63,33 @@ class CRUDExpiry:
         Add a product with an expiry date to the user's inventory.
         - Resolves (or creates) the ingredient by name.
         - Auto-creates inventory if the user doesn't have one.
-        - Always inserts a NEW row — even if the same ingredient already exists
-          — because the user bought a new batch with a different expiry date.
+        - Updates quantity of an existing item if the batch (same ingredient, unit, and expiry date) matches,
+          otherwise inserts a new row.
         """
         inventory = self._get_or_create_inventory(db, user_id)
         ingredient = self._get_or_create_ingredient(db, product_name)
 
-        item = InvItem(
-            inv_id=inventory.inv_id,
-            ing_id=ingredient.ing_id,
-            quantity=quantity,
-            unit=unit,
-            date_added=date.today(),
-            expiry_date=expiry_date,
-        )
-        db.add(item)
+        # Check if an item with the same ingredient, unit (case-insensitive), and expiry date already exists
+        existing_item = db.query(InvItem).filter(
+            InvItem.inv_id == inventory.inv_id,
+            InvItem.ing_id == ingredient.ing_id,
+            func.lower(InvItem.unit) == unit.strip().lower(),
+            InvItem.expiry_date == expiry_date
+        ).first()
+
+        if existing_item:
+            existing_item.quantity += quantity
+            item = existing_item
+        else:
+            item = InvItem(
+                inv_id=inventory.inv_id,
+                ing_id=ingredient.ing_id,
+                quantity=quantity,
+                unit=unit,
+                date_added=date.today(),
+                expiry_date=expiry_date,
+            )
+            db.add(item)
 
         # keep inventory.last_update fresh
         inventory.last_update = date.today()
