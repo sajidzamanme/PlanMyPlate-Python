@@ -159,7 +159,18 @@ Retrieve profile of the currently authenticated user.
   }
   ```
   > All fields are optional. Only provided fields are updated.
-- **Response Body:** Updated User object.
+- **Response Body:**
+  ```json
+  {
+    "userId": 1,
+    "firstName": "John",
+    "lastName": "Updated",
+    "email": "john.doe@example.com",
+    "phone": "+8801700000000",
+    "dateOfBirth": "1998-06-20"
+  }
+  ```
+
 
 ### Delete User
 - **URL:** `/api/users/{user_id}`
@@ -251,7 +262,14 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
       "recipeIngredients": [
         {
           "id": 1,
-          "ingredient": { "ingId": 2, "name": "Chicken", "price": 4.50, "tags": [] },
+          "ingredient": { 
+            "ingId": 2, 
+            "name": "Chicken", 
+            "price": 4.50, 
+            "tags": [
+              { "tagId": 1, "tagName": "Poultry" }
+            ] 
+          },
           "quantity": 500,
           "unit": "g"
         }
@@ -260,6 +278,7 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
   ]
   ```
   > `protein`, `carbs`, `fat`, `fiber` are all **per serving** in grams. Any field may be `null` if not provided.
+  > `tags` inside ingredients are objects with `tagId` (integer) and `tagName` (string).
 
 ### Search Recipes
 - **URL:** `/api/recipes/search?name=chicken`
@@ -304,6 +323,22 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
 - **URL:** `/api/recipes/{id}`
 - **Method:** `GET`
 - **Response Body:** Single Recipe object.
+
+### Update Recipe
+- **URL:** `/api/recipes/{id}`
+- **Method:** `PUT`
+- **Request Body:** Same format as Create Recipe.
+- **Response Body:** Updated Recipe object.
+
+### Delete Recipe
+- **URL:** `/api/recipes/{id}`
+- **Method:** `DELETE`
+- **Response Body:**
+  ```json
+  {
+    "message": "Recipe deleted successfully"
+  }
+  ```
 
 ---
 
@@ -585,11 +620,12 @@ All inventory endpoints require authentication.
 - **Response Body:**
   ```json
   [
-    { "dietId": 1, "dietName": "Omnivore" },
-    { "dietId": 2, "dietName": "Vegetarian" },
-    { "dietId": 3, "dietName": "Vegan" }
+    { "diet_id": 1, "diet_name": "Omnivore" },
+    { "diet_id": 2, "diet_name": "Vegetarian" },
+    { "diet_id": 3, "diet_name": "Vegan" }
   ]
   ```
+
 
 > For **allergies and dislikes**, use `GET /api/ingredients` — users select from the same ingredient list for both.
 
@@ -979,7 +1015,15 @@ Look up any user's profile.
     "price": 3.50
   }
   ```
-- **Response Body (201 Created):** Created Ingredient object.
+- **Response Body (201 Created):**
+  ```json
+  {
+    "ingId": 12,
+    "name": "Coconut",
+    "price": 3.50,
+    "tags": []
+  }
+  ```
 
 ### Update Ingredient
 - **URL:** `/api/admin/ingredients/{id}`
@@ -991,10 +1035,25 @@ Look up any user's profile.
     "price": 4.00
   }
   ```
+- **Response Body:**
+  ```json
+  {
+    "ingId": 12,
+    "name": "Updated Name",
+    "price": 4.00,
+    "tags": []
+  }
+  ```
 
 ### Delete Ingredient
 - **URL:** `/api/admin/ingredients/{id}`
 - **Method:** `DELETE`
+- **Response Body:**
+  ```json
+  {
+    "message": "Ingredient deleted successfully"
+  }
+  ```
 
 ### Update Recipe
 - **URL:** `/api/admin/recipes/{id}`
