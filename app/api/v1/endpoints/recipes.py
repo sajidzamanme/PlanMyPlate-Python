@@ -1,9 +1,11 @@
 from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app import crud
 from app.api import deps
 from app.schemas.recipe import RecipeResponse, RecipeCreateDto
+from app.models.user import User
 
 router = APIRouter()
 
@@ -74,3 +76,35 @@ def delete_recipe(
         raise HTTPException(status_code=404, detail="Recipe not found")
     crud.recipe.remove(db, id=id)
     return {"message": "Recipe deleted successfully"}
+
+@router.post("/{id}/cook")
+def cook_recipe(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    servings: float = 1.0,
+    force: bool = False,
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    recipe = crud.recipe.get(db, id=id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+        
+    if not force:
+        missing = crud.inventory.check_recipe_ingredients(db, user_id=current_user.user_id, recipe_id=id, servings=servings)
+        if missing:
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "status": "insufficient_ingredients",
+                    "title": "Missing Pantry Items",
+                    "message": "missing inventory item",
+                    "missing": missing
+                }
+            )
+            
+    success = crud.inventory.deduct_recipe_ingredients(db, user_id=current_user.user_id, recipe_id=id, servings=servings)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to cook recipe. Please check your inventory.")
+    return {"message": "Recipe cooked and ingredients deducted from inventory"}
+

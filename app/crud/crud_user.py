@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.user import User
@@ -6,11 +6,36 @@ from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
+    def get(self, db: Session, id: Any) -> Optional[User]:
+        user = db.get(self.model, id)
+        if user and user.is_deleted:
+            return None
+        return user
+
+    def remove(self, db: Session, *, id: int) -> Optional[User]:
+        user = db.get(self.model, id)
+        if user:
+            user.is_deleted = True
+            
+            # Prevent VARCHAR(150) overflow for email
+            email_suffix = f"_deleted_{user.user_id}"
+            max_email_len = 150 - len(email_suffix)
+            user.email = f"{user.email[:max_email_len]}{email_suffix}"
+            
+            # Prevent VARCHAR(20) overflow for phone
+            phone_suffix = f"_deleted_{user.user_id}"
+            max_phone_len = 20 - len(phone_suffix)
+            user.phone = f"{user.phone[:max_phone_len]}{phone_suffix}"
+            
+            db.add(user)
+            db.commit()
+        return user
+
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
-        return db.query(User).filter(User.email == email).first()
+        return db.query(User).filter(User.email == email, User.is_deleted == False).first()
 
     def get_by_phone(self, db: Session, *, phone: str) -> Optional[User]:
-        return db.query(User).filter(User.phone == phone).first()
+        return db.query(User).filter(User.phone == phone, User.is_deleted == False).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
         db_obj = User(

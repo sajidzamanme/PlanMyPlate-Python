@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Float, Boolean
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -17,6 +17,7 @@ class Recipe(Base):
     cook_time = Column(Integer)
     instructions = Column(Text)
     image_url = Column(String(255))
+    is_deleted = Column(Boolean, nullable=False, default=False)
     
     # Relationship to RecipeIngredient
     recipe_ingredients = relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete-orphan")

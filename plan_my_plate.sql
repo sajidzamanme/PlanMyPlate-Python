@@ -19,6 +19,7 @@ CREATE TABLE users (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   reset_token VARCHAR(100) DEFAULT NULL,
   reset_token_expiry TIMESTAMP NULL DEFAULT NULL,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id),
   UNIQUE KEY email (email),
   UNIQUE KEY phone (phone)
@@ -27,16 +28,13 @@ CREATE TABLE users (
 CREATE TABLE user_preferences (
   pref_id INT NOT NULL AUTO_INCREMENT,
   user_id INT NOT NULL,
-  diet_id INT DEFAULT NULL,
   budget DECIMAL(10,2) DEFAULT NULL,
   height DECIMAL(5,2) DEFAULT NULL,
   weight DECIMAL(5,2) DEFAULT NULL,
   gender VARCHAR(10) DEFAULT NULL,
   PRIMARY KEY (pref_id),
   UNIQUE KEY user_id (user_id),
-  KEY diet_id (diet_id),
-  CONSTRAINT fk_up_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-  CONSTRAINT fk_up_diet FOREIGN KEY (diet_id) REFERENCES diets(diet_id) ON DELETE SET NULL
+  CONSTRAINT fk_up_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE user_preferences_allergies (
@@ -53,6 +51,15 @@ CREATE TABLE user_preferences_dislikes (
   PRIMARY KEY (pref_id, ing_id),
   KEY ing_id (ing_id),
   CONSTRAINT fk_upd_pref FOREIGN KEY (pref_id) REFERENCES user_preferences(pref_id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_preferences_diets (
+  pref_id INT NOT NULL,
+  diet_id INT NOT NULL,
+  PRIMARY KEY (pref_id, diet_id),
+  KEY diet_id (diet_id),
+  CONSTRAINT fk_upd_diet_pref FOREIGN KEY (pref_id) REFERENCES user_preferences(pref_id) ON DELETE CASCADE,
+  CONSTRAINT fk_upd_diet_diet FOREIGN KEY (diet_id) REFERENCES diets(diet_id) ON DELETE CASCADE
 );
 
 CREATE TABLE ingredients (
@@ -92,6 +99,7 @@ CREATE TABLE recipe (
   cook_time INT DEFAULT NULL,
   instructions TEXT DEFAULT NULL,
   image_url VARCHAR(255) DEFAULT NULL,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (recipe_id)
 );
 

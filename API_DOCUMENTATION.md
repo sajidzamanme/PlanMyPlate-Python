@@ -95,7 +95,7 @@ Initiate password reset process.
 - **Response Body:**
   ```json
   {
-    "message": "Password reset token sent to email. Token: 1234"
+    "message": "Password reset token sent to email. Token: 0000"
   }
   ```
 
@@ -107,7 +107,7 @@ Complete password reset.
 - **Request Body:**
   ```json
   {
-    "resetToken": "1234",
+    "resetToken": "0000",
     "newPassword": "newSecurePassword456"
   }
   ```
@@ -199,7 +199,7 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
   {
     "prefId": 10,
     "userId": 1,
-    "diet": "Vegan",
+    "diets": ["Vegan"],
     "allergies": ["Peanuts", "Shellfish"],
     "dislikes": ["Mushrooms"],
     "budget": 150.00,
@@ -221,7 +221,7 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
   ```json
   {
     "userId": 1,
-    "diet": "Vegan",
+    "diets": ["Vegan"],
     "allergies": ["Peanuts"],
     "dislikes": [],
     "budget": 200.00,
@@ -338,9 +338,41 @@ Manage dietary preferences, allergies, and dislikes. Requires authentication.
   {
     "message": "Recipe deleted successfully"
   }
+
+### Cook Recipe
+- **URL:** `/api/recipes/{id}/cook`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  - `servings` (optional, float): Number of servings to cook (default: `1.0`).
+  - `force` (optional, boolean): Set to `true` to bypass inventory pre-flight validation and cook anyway (default: `false`).
+- **Response Body (200 OK):**
+  ```json
+  {
+    "message": "Recipe cooked and ingredients deducted from inventory"
+  }
+  ```
+- **Error Response (409 Conflict):**
+  Returned if ingredients are missing/insufficient and `force` is `false`.
+  ```json
+  {
+    "status": "insufficient_ingredients",
+    "title": "Missing Pantry Items",
+    "message": "missing inventory item",
+    "missing": [
+      {
+        "ingId": 12,
+        "name": "Chicken",
+        "required": 500.0,
+        "available": 200.0,
+        "unit": "g"
+      }
+    ]
+  }
   ```
 
 ---
+
 
 ## 5. Ingredients
 
@@ -451,7 +483,23 @@ Generate a meal plan with selected recipes. Also creates a grocery list with agg
 - **URL:** `/api/meal-plans/{id}`
 - **Method:** `DELETE`
 
+### Cook Meal Slot
+- **URL:** `/api/meal-plans/slots/{slot_id}/cook`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  - `force` (optional, boolean): Set to `true` to bypass inventory pre-flight validation and cook anyway (default: `false`).
+- **Response Body (200 OK):**
+  ```json
+  {
+    "message": "Meal slot cooked and ingredients deducted from inventory"
+  }
+  ```
+- **Error Response (409 Conflict):**
+  Same validation schema as Cook Recipe.
+
 ---
+
 
 ## 7. Grocery Lists
 All grocery list endpoints require authentication.
@@ -610,7 +658,25 @@ All inventory endpoints require authentication.
 - **Method:** `DELETE`
 - **Response Body:** `{"message": "Item removed successfully"}`
 
+### Cook Recipe (via Inventory)
+- **URL:** `/api/inventory/cook`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Parameters:**
+  - `recipeId` (required, integer): The ID of the recipe to cook.
+  - `servings` (optional, float): Number of servings to cook (default: `1.0`).
+  - `force` (optional, boolean): Set to `true` to bypass inventory pre-flight validation and cook anyway (default: `false`).
+- **Response Body (200 OK):**
+  ```json
+  {
+    "message": "Recipe cooked and ingredients deducted from inventory"
+  }
+  ```
+- **Error Response (409 Conflict):**
+  Same validation schema as Cook Recipe.
+
 ---
+
 
 ## 9. Reference Data
 
@@ -666,6 +732,8 @@ Generate a custom recipe using Google Gemini AI based on user preferences and co
   ```json
   {
     "availableIngredients": ["chicken", "tomatoes", "garlic", "pasta"],
+    "tags": ["Dinner", "Pasta"],
+    "useInventory": false,
     "maxCalories": 600,
     "cuisineType": "Italian",
     "allergies": ["peanuts"],
@@ -676,13 +744,21 @@ Generate a custom recipe using Google Gemini AI based on user preferences and co
   ```
 
 **Request Parameters:**
-- `availableIngredients` (optional): List of ingredients you have available
+- `availableIngredients` (optional): List of ingredients you have available (ignored if `useInventory` is `true`)
+- `tags` (optional): List of preferred recipe tags/categories to influence generation (e.g. `["Fruit"]`)
+- `useInventory` (optional): Boolean (default `false`). Set to `true` to dynamically resolve `availableIngredients` from the user's pantry/inventory. If `tags` are also provided, the inventory is filtered to only include items matching these tags.
 - `maxCalories` (optional): Maximum calories per serving (50-5000)
 - `cuisineType` (optional): Desired cuisine (e.g., Italian, Indian, Mexican)
 - `allergies` (optional): List of allergens to avoid
 - `dietaryPreference` (optional): Dietary restriction (e.g., Vegan, Vegetarian, Keto)
 - `mood` (optional): Occasion or mood (e.g., Comfort Food, Quick & Easy)
 - `maxCookingTime` (optional): Maximum total cooking time in minutes (5-300)
+
+**Error Responses (400 Bad Request):**
+- Returned if `useInventory` is `true` and the inventory is empty:
+  `{"error": "ClientError", "message": "Your inventory is empty. Add ingredients to your inventory first."}`
+- Returned if `useInventory` is `true`, `tags` are provided, and no inventory items match those tags:
+  `{"error": "ClientError", "message": "No ingredients in your inventory match the selected tags."}`
 
 - **Response Body (201 Created):** Created Recipe object (same structure as Recipe endpoints).
 
@@ -1075,7 +1151,7 @@ Look up any user's profile.
 
 ## 16. Error Handling
 
-The API uses standard HTTP status codes and returns structured error responses.
+The API uses standard HTTP status codes and returns structured, user-friendly error responses. All exception detail messages are written in plain, clear language so that the frontend can directly display the `"detail"` string (e.g. in dialogs or toast messages) without any extra translation.
 
 ### Error Response Structure
 ```json
@@ -1083,6 +1159,7 @@ The API uses standard HTTP status codes and returns structured error responses.
   "detail": "Recipe not found"
 }
 ```
+
 
 ### Common Status Codes
 | Status Code | Description | Scenario |

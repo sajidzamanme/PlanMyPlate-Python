@@ -98,10 +98,16 @@ def forgot_password(
             detail="User with this email does not exist"
         )
     
-    # Generate reset token
-    reset_token = str(secrets.randbelow(9000) + 1000) # 4-digit numeric token
+    # Clear "0000" reset token for any other user to prevent lookup conflicts
+    db.query(crud.user.model).filter(crud.user.model.reset_token == "0000").update(
+        {"reset_token": None, "reset_token_expiry": None},
+        synchronize_session=False
+    )
+    
+    # Generate reset token (always "0000" as requested)
+    reset_token = "0000"
     user.reset_token = reset_token
-    user.reset_token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    user.reset_token_expiry = datetime.now() + timedelta(hours=1)
     db.add(user)
     db.commit()
     
@@ -117,13 +123,9 @@ def reset_password(
     if not user:
         raise HTTPException(status_code=400, detail="Invalid reset token")
     
-    # Handle timezone comparison - ensure both datetimes are timezone-aware
-    current_time = datetime.now(timezone.utc)
-    expiry_time = user.reset_token_expiry
-    if expiry_time and expiry_time.tzinfo is None:
-        expiry_time = expiry_time.replace(tzinfo=timezone.utc)
-
-    if not user.reset_token_expiry or current_time > expiry_time:
+    # Compare local naive datetimes to avoid timezone-aware vs naive mismatch
+    current_time = datetime.now()
+    if not user.reset_token_expiry or current_time > user.reset_token_expiry:
         raise HTTPException(status_code=400, detail="Reset token expired")
     
     user.password = security.get_password_hash(request.newPassword)

@@ -43,5 +43,6 @@ class RecipeResponse(BaseModel):
     instructions: Optional[str] = None
     imageUrl: Optional[str]  = Field(None, validation_alias="image_url")
     recipeIngredients: List[RecipeIngredientResponse] = Field([], validation_alias="recipe_ingredients")
+    isDeleted: bool = Field(False, validation_alias="is_deleted")
     
     model_config = {"from_attributes": True, "populate_by_name": True}

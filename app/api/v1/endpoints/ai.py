@@ -38,15 +38,45 @@ def generate_recipe(
 
     Requires a valid GEMINI_API_KEY in the server's .env file.
     """
+    if request.useInventory:
+        inventory = crud.inventory.get_by_user_id(db, user_id=current_user.user_id)
+        if not inventory:
+            raise HTTPException(
+                status_code=400,
+                detail="Your inventory is empty. Add ingredients to your inventory first."
+            )
+            
+        from app.models.inventory import InvItem
+        from app.models.ingredient import Ingredient
+        
+        query = db.query(Ingredient).join(InvItem).filter(InvItem.inv_id == inventory.inv_id)
+        if request.tags:
+            from app.models.reference import IngredientTag
+            query = query.join(Ingredient.tags).filter(IngredientTag.tag_name.in_(request.tags))
+            
+        ingredients = query.all()
+        if not ingredients:
+            if request.tags:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No ingredients in your inventory match the selected tags."
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Your inventory is empty. Add ingredients to your inventory first."
+                )
+                
+        request.availableIngredients = list(set([ing.name for ing in ingredients]))
+
     try:
         recipe_dto = gemini_service.generate_recipe(request, db)
     except ValueError as exc:
-        # GEMINI_API_KEY not configured
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail="Gemini API is not configured on the server. Please check environment settings.")
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"AI recipe generation failed: {str(exc)}",
+            detail="AI recipe generation failed. Please try again later.",
         )
 
     # Persist the generated recipe
@@ -98,7 +128,7 @@ def generate_meal_plan(
     weight = prefs.weight if prefs else None
     gender = prefs.gender if prefs else None
     budget = prefs.budget if prefs else None
-    diet = prefs.diet.diet_name if prefs and prefs.diet else None
+    diets = [d.diet_name for d in prefs.diets] if prefs and prefs.diets else []
     allergies = [a.name for a in prefs.allergies] if prefs and prefs.allergies else []
     dislikes = [d.name for d in prefs.dislikes] if prefs and prefs.dislikes else []
     
@@ -113,7 +143,8 @@ def generate_meal_plan(
         "bmi": bmi,
         "bmi_category": bmi_category,
         "budget": float(budget) if budget else None,
-        "diet": diet,
+        "diet": ", ".join(diets) if diets else None,
+        "diets": diets,
         "allergies": allergies,
         "dislikes": dislikes
     }
@@ -150,11 +181,11 @@ def generate_meal_plan(
             existing_recipes=recipes_data,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail="Gemini API is not configured on the server. Please check environment settings.")
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"AI meal plan generation failed: {str(exc)}",
+            detail="AI meal plan generation failed. Please try again later.",
         )
 
     # Sort the meals by day and mealType to ensure correct slot ordering

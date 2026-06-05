@@ -20,10 +20,13 @@ class CRUDUserPreferences(CRUDBase[UserPreferences, UserPreferencesDto, UserPref
             db_obj = UserPreferences(user_id=user_id)
             db.add(db_obj)
 
-        if obj_in.diet:
-            diet = crud_diet.get_by_name(db, name=obj_in.diet)
-            if diet:
-                db_obj.diet = diet
+        if obj_in.diets is not None:
+            diets = []
+            for name in obj_in.diets:
+                diet = crud_diet.get_by_name(db, name=name.strip())
+                if diet:
+                    diets.append(diet)
+            db_obj.diets = diets
         
         if obj_in.allergies:
             allergies = []

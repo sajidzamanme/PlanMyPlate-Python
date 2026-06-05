@@ -144,3 +144,147 @@ class TestAiEndpoints:
 
         finally:
             gemini_service.generate_meal_plan_recipes = original_generate_meal_plan_recipes
+
+    def test_generate_recipe_use_inventory_empty_fails(self, client, auth_headers):
+        # Empty inventory should fail
+        payload = {
+            "useInventory": True,
+            "tags": ["protein"]
+        }
+        resp = client.post("/api/ai/generate-recipe", json=payload, headers=auth_headers)
+        assert resp.status_code == 400
+        assert "inventory is empty" in resp.json()["detail"].lower()
+
+    def test_generate_recipe_use_inventory_success(self, client, db_session, test_user, auth_headers):
+        # Mock generate_recipe on gemini_service
+        original_generate_recipe = gemini_service.generate_recipe
+        mock_dto = RecipeCreateDto(
+            name="Mocked Omelette",
+            description="Tasty omelette",
+            calories=300,
+            ingredients=[]
+        )
+        gemini_service.generate_recipe = MagicMock(return_value=mock_dto)
+
+        try:
+            # Seed inventory
+            from app.models.inventory import Inventory, InvItem
+            from app.models.ingredient import Ingredient
+            
+            egg = Ingredient(name="Egg", price=0.5)
+            cheese = Ingredient(name="Cheese", price=1.0)
+            db_session.add_all([egg, cheese])
+            db_session.commit()
+            
+            inv = Inventory(user_id=test_user.user_id)
+            db_session.add(inv)
+            db_session.commit()
+            
+            inv_egg = InvItem(inv_id=inv.inv_id, ing_id=egg.ing_id, quantity=3.0, unit="pcs")
+            inv_cheese = InvItem(inv_id=inv.inv_id, ing_id=cheese.ing_id, quantity=100.0, unit="g")
+            db_session.add_all([inv_egg, inv_cheese])
+            db_session.commit()
+
+            payload = {
+                "useInventory": True,
+                "maxCalories": 400
+            }
+            resp = client.post("/api/ai/generate-recipe", json=payload, headers=auth_headers)
+            assert resp.status_code == 201
+            
+            # Verify mock was called with Egg and Cheese in availableIngredients
+            mock_call_args = gemini_service.generate_recipe.call_args[0][0]
+            assert set(mock_call_args.availableIngredients) == {"Egg", "Cheese"}
+            
+        finally:
+            gemini_service.generate_recipe = original_generate_recipe
+
+    def test_generate_recipe_use_inventory_with_tags_success(self, client, db_session, test_user, auth_headers):
+        # Mock generate_recipe on gemini_service
+        original_generate_recipe = gemini_service.generate_recipe
+        mock_dto = RecipeCreateDto(
+            name="Mocked Fruit Salad",
+            description="Fresh fruits",
+            calories=150,
+            ingredients=[]
+        )
+        gemini_service.generate_recipe = MagicMock(return_value=mock_dto)
+
+        try:
+            # Seed ingredients, tags, and inventory
+            from app.models.inventory import Inventory, InvItem
+            from app.models.ingredient import Ingredient
+            from app.models.reference import IngredientTag
+            
+            apple = Ingredient(name="Apple", price=0.8)
+            beef = Ingredient(name="Beef", price=5.0)
+            
+            fruit_tag = IngredientTag(tag_name="Fruit")
+            meat_tag = IngredientTag(tag_name="Meat")
+            db_session.add_all([apple, beef, fruit_tag, meat_tag])
+            db_session.commit()
+            
+            # Map tags
+            apple.tags.append(fruit_tag)
+            beef.tags.append(meat_tag)
+            db_session.commit()
+            
+            inv = Inventory(user_id=test_user.user_id)
+            db_session.add(inv)
+            db_session.commit()
+            
+            inv_apple = InvItem(inv_id=inv.inv_id, ing_id=apple.ing_id, quantity=5.0, unit="pcs")
+            inv_beef = InvItem(inv_id=inv.inv_id, ing_id=beef.ing_id, quantity=200.0, unit="g")
+            db_session.add_all([inv_apple, inv_beef])
+            db_session.commit()
+
+            # Generate with tag "Fruit"
+            payload = {
+                "useInventory": True,
+                "tags": ["Fruit"]
+            }
+            resp = client.post("/api/ai/generate-recipe", json=payload, headers=auth_headers)
+            assert resp.status_code == 201
+            
+            # Verify mock was called only with Apple (Fruit) and not Beef
+            mock_call_args = gemini_service.generate_recipe.call_args[0][0]
+            assert mock_call_args.availableIngredients == ["Apple"]
+            assert mock_call_args.tags == ["Fruit"]
+            
+        finally:
+            gemini_service.generate_recipe = original_generate_recipe
+
+    def test_generate_recipe_use_inventory_with_tags_no_match_fails(self, client, db_session, test_user, auth_headers):
+        try:
+            # Seed ingredients, tags, and inventory (but no tag Fruit)
+            from app.models.inventory import Inventory, InvItem
+            from app.models.ingredient import Ingredient
+            from app.models.reference import IngredientTag
+            
+            beef = Ingredient(name="Beef", price=5.0)
+            meat_tag = IngredientTag(tag_name="Meat")
+            db_session.add_all([beef, meat_tag])
+            db_session.commit()
+            
+            beef.tags.append(meat_tag)
+            db_session.commit()
+            
+            inv = Inventory(user_id=test_user.user_id)
+            db_session.add(inv)
+            db_session.commit()
+            
+            inv_beef = InvItem(inv_id=inv.inv_id, ing_id=beef.ing_id, quantity=200.0, unit="g")
+            db_session.add_all([inv_beef])
+            db_session.commit()
+
+            # Generate with tag "Fruit" (which beef doesn't have)
+            payload = {
+                "useInventory": True,
+                "tags": ["Fruit"]
+            }
+            resp = client.post("/api/ai/generate-recipe", json=payload, headers=auth_headers)
+            assert resp.status_code == 400
+            assert "no ingredients in your inventory match" in resp.json()["detail"].lower()
+            
+        finally:
+            pass
