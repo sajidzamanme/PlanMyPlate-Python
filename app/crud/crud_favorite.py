@@ -58,7 +58,7 @@ class CRUDFavorite:
                 UserFavorite.user_id == user_id,
                 Recipe.is_deleted == False
             )
-            .order_by(UserFavorite.created_at.desc())
+            .order_by(Recipe.name)
             .offset(skip)
             .limit(limit)
             .all()

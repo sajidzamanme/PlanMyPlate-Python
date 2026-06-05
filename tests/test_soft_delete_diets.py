@@ -53,8 +53,18 @@ class TestUserSoftDelete:
         db_record = db_session.query(User).filter(User.user_id == user_id).first()
         assert db_record is not None
         assert db_record.is_deleted is True
-        assert db_record.email == f"softdelete@test.com_deleted_{user_id}"
-        assert db_record.phone == f"+9999999999_deleted_{user_id}"
+        expected_email = f"softdelete@test.com_deleted_{user_id}"
+        if len(expected_email) > 150:
+            suffix = f"_deleted_{user_id}"
+            expected_email = "softdelete@test.com"[:150 - len(suffix)] + suffix
+            
+        expected_phone = f"+9999999999_deleted_{user_id}"
+        if len(expected_phone) > 20:
+            suffix = f"_deleted_{user_id}"
+            expected_phone = "+9999999999"[:20 - len(suffix)] + suffix
+            
+        assert db_record.email == expected_email
+        assert db_record.phone == expected_phone
 
         # 4. Verify API lookups return None
         assert crud_user.get(db_session, id=user_id) is None

@@ -16,8 +16,17 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         user = db.get(self.model, id)
         if user:
             user.is_deleted = True
-            user.email = f"{user.email}_deleted_{user.user_id}"
-            user.phone = f"{user.phone}_deleted_{user.user_id}"
+            
+            # Prevent VARCHAR(150) overflow for email
+            email_suffix = f"_deleted_{user.user_id}"
+            max_email_len = 150 - len(email_suffix)
+            user.email = f"{user.email[:max_email_len]}{email_suffix}"
+            
+            # Prevent VARCHAR(20) overflow for phone
+            phone_suffix = f"_deleted_{user.user_id}"
+            max_phone_len = 20 - len(phone_suffix)
+            user.phone = f"{user.phone[:max_phone_len]}{phone_suffix}"
+            
             db.add(user)
             db.commit()
         return user

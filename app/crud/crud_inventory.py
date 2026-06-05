@@ -53,7 +53,7 @@ class CRUDInventory(CRUDBase[Inventory, BaseModel, BaseModel]):
         return db_obj
 
     def get_items(self, db: Session, inv_id: int) -> List[InvItem]:
-        return db.query(InvItem).filter(InvItem.inv_id == inv_id).all()
+        return db.query(InvItem).join(Ingredient).filter(InvItem.inv_id == inv_id).order_by(Ingredient.name).all()
 
     def add_to_inventory(self, db: Session, user_id: int, ingredient: Ingredient, quantity: float, unit: str):
         inventory = self.get_by_user_id(db, user_id=user_id)
