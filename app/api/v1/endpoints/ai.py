@@ -41,12 +41,11 @@ def generate_recipe(
     try:
         recipe_dto = gemini_service.generate_recipe(request, db)
     except ValueError as exc:
-        # GEMINI_API_KEY not configured
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail="Gemini API is not configured on the server. Please check environment settings.")
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"AI recipe generation failed: {str(exc)}",
+            detail="AI recipe generation failed. Please try again later.",
         )
 
     # Persist the generated recipe
@@ -150,11 +149,11 @@ def generate_meal_plan(
             existing_recipes=recipes_data,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail="Gemini API is not configured on the server. Please check environment settings.")
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"AI meal plan generation failed: {str(exc)}",
+            detail="AI meal plan generation failed. Please try again later.",
         )
 
     # Sort the meals by day and mealType to ensure correct slot ordering

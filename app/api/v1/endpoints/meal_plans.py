@@ -157,6 +157,6 @@ def cook_meal_slot(
             
     success = crud.inventory.deduct_recipe_ingredients(db, user_id=current_user.user_id, recipe_id=slot.recipe_id, servings=servings)
     if not success:
-        raise HTTPException(status_code=400, detail="Failed to cook recipe from slot")
+        raise HTTPException(status_code=400, detail="Failed to cook recipe from slot. Please check your inventory.")
     return {"message": "Meal slot cooked and ingredients deducted from inventory"}
 

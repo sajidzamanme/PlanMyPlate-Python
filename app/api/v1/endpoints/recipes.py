@@ -105,6 +105,6 @@ def cook_recipe(
             
     success = crud.inventory.deduct_recipe_ingredients(db, user_id=current_user.user_id, recipe_id=id, servings=servings)
     if not success:
-        raise HTTPException(status_code=400, detail="Failed to cook recipe")
+        raise HTTPException(status_code=400, detail="Failed to cook recipe. Please check your inventory.")
     return {"message": "Recipe cooked and ingredients deducted from inventory"}
 

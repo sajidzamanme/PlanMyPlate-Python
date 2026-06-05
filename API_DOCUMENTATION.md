@@ -1141,7 +1141,7 @@ Look up any user's profile.
 
 ## 16. Error Handling
 
-The API uses standard HTTP status codes and returns structured error responses.
+The API uses standard HTTP status codes and returns structured, user-friendly error responses. All exception detail messages are written in plain, clear language so that the frontend can directly display the `"detail"` string (e.g. in dialogs or toast messages) without any extra translation.
 
 ### Error Response Structure
 ```json
@@ -1149,6 +1149,7 @@ The API uses standard HTTP status codes and returns structured error responses.
   "detail": "Recipe not found"
 }
 ```
+
 
 ### Common Status Codes
 | Status Code | Description | Scenario |
