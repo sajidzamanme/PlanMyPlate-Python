@@ -24,6 +24,14 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
+        
+        # Auto-create inventory for the user
+        from app.models.inventory import Inventory
+        from datetime import date
+        inventory = Inventory(user_id=db_obj.user_id, last_update=date.today())
+        db.add(inventory)
+        db.commit()
+        
         return db_obj
 
     def update(self, db: Session, *, db_obj: User, obj_in: UserUpdate) -> User:
