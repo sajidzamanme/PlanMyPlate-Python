@@ -732,6 +732,8 @@ Generate a custom recipe using Google Gemini AI based on user preferences and co
   ```json
   {
     "availableIngredients": ["chicken", "tomatoes", "garlic", "pasta"],
+    "tags": ["Dinner", "Pasta"],
+    "useInventory": false,
     "maxCalories": 600,
     "cuisineType": "Italian",
     "allergies": ["peanuts"],
@@ -742,13 +744,21 @@ Generate a custom recipe using Google Gemini AI based on user preferences and co
   ```
 
 **Request Parameters:**
-- `availableIngredients` (optional): List of ingredients you have available
+- `availableIngredients` (optional): List of ingredients you have available (ignored if `useInventory` is `true`)
+- `tags` (optional): List of preferred recipe tags/categories to influence generation (e.g. `["Fruit"]`)
+- `useInventory` (optional): Boolean (default `false`). Set to `true` to dynamically resolve `availableIngredients` from the user's pantry/inventory. If `tags` are also provided, the inventory is filtered to only include items matching these tags.
 - `maxCalories` (optional): Maximum calories per serving (50-5000)
 - `cuisineType` (optional): Desired cuisine (e.g., Italian, Indian, Mexican)
 - `allergies` (optional): List of allergens to avoid
 - `dietaryPreference` (optional): Dietary restriction (e.g., Vegan, Vegetarian, Keto)
 - `mood` (optional): Occasion or mood (e.g., Comfort Food, Quick & Easy)
 - `maxCookingTime` (optional): Maximum total cooking time in minutes (5-300)
+
+**Error Responses (400 Bad Request):**
+- Returned if `useInventory` is `true` and the inventory is empty:
+  `{"error": "ClientError", "message": "Your inventory is empty. Add ingredients to your inventory first."}`
+- Returned if `useInventory` is `true`, `tags` are provided, and no inventory items match those tags:
+  `{"error": "ClientError", "message": "No ingredients in your inventory match the selected tags."}`
 
 - **Response Body (201 Created):** Created Recipe object (same structure as Recipe endpoints).
 

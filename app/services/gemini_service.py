@@ -67,6 +67,10 @@ def _build_recipe_prompt(req: AiRecipeRequestDto) -> str:
         constraints.append(
             f"- Preferred ingredients (use as many as possible): {', '.join(req.availableIngredients)}"
         )
+    if hasattr(req, "tags") and req.tags:
+        constraints.append(
+            f"- Preferred recipe tags / category (the recipe should match these tags): {', '.join(req.tags)}"
+        )
     if req.maxCalories:
         constraints.append(f"- Maximum calories per serving: {req.maxCalories} kcal")
     if req.cuisineType:

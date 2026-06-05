@@ -38,6 +38,37 @@ def generate_recipe(
 
     Requires a valid GEMINI_API_KEY in the server's .env file.
     """
+    if request.useInventory:
+        inventory = crud.inventory.get_by_user_id(db, user_id=current_user.user_id)
+        if not inventory:
+            raise HTTPException(
+                status_code=400,
+                detail="Your inventory is empty. Add ingredients to your inventory first."
+            )
+            
+        from app.models.inventory import InvItem
+        from app.models.ingredient import Ingredient
+        
+        query = db.query(Ingredient).join(InvItem).filter(InvItem.inv_id == inventory.inv_id)
+        if request.tags:
+            from app.models.reference import IngredientTag
+            query = query.join(Ingredient.tags).filter(IngredientTag.tag_name.in_(request.tags))
+            
+        ingredients = query.all()
+        if not ingredients:
+            if request.tags:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No ingredients in your inventory match the selected tags."
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Your inventory is empty. Add ingredients to your inventory first."
+                )
+                
+        request.availableIngredients = list(set([ing.name for ing in ingredients]))
+
     try:
         recipe_dto = gemini_service.generate_recipe(request, db)
     except ValueError as exc:
